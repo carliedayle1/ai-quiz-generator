@@ -1,0 +1,137 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Models\Quiz;
+use App\Models\Submission;
+use Illuminate\Http\Request;
+use Inertia\Inertia;
+
+class SubmissionController extends Controller
+{
+    public function take(Quiz $quiz, Request $request)
+    {
+        $user = $request->user();
+
+        if (!$user->isStudent()) {
+            abort(403);
+        }
+
+        if (!$quiz->is_published) {
+            abort(404);
+        }
+
+        $classIds = $user->enrolledClasses()->pluck('classes.id');
+        if (!$classIds->contains($quiz->class_id)) {
+            abort(403);
+        }
+
+        $existing = Submission::where('quiz_id', $quiz->id)->where('user_id', $user->id)->first();
+        if ($existing && $existing->submitted_at) {
+            return redirect()->route('submissions.result', $existing);
+        }
+
+        $submission = $existing ?? Submission::create([
+            'quiz_id' => $quiz->id,
+            'user_id' => $user->id,
+        ]);
+
+        $quiz->load('questions');
+
+        return Inertia::render('Exams/Take', [
+            'quiz' => $quiz,
+            'submission' => $submission,
+        ]);
+    }
+
+    public function submit(Quiz $quiz, Request $request)
+    {
+        $user = $request->user();
+
+        $submission = Submission::where('quiz_id', $quiz->id)
+            ->where('user_id', $user->id)
+            ->whereNull('submitted_at')
+            ->firstOrFail();
+
+        $validated = $request->validate([
+            'answers' => 'required|array',
+        ]);
+
+        $score = $this->autoGrade($quiz, $validated['answers']);
+
+        $submission->update([
+            'answers' => $validated['answers'],
+            'score' => $score,
+            'submitted_at' => now(),
+        ]);
+
+        return redirect()->route('submissions.result', $submission);
+    }
+
+    public function result(Submission $submission, Request $request)
+    {
+        $user = $request->user();
+
+        if ($user->isStudent() && $submission->user_id !== $user->id) {
+            abort(403);
+        }
+
+        if ($user->isTeacher() && $submission->quiz->classModel->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $submission->load(['quiz.questions', 'student', 'examLogs']);
+
+        return Inertia::render('Exams/Result', [
+            'submission' => $submission,
+        ]);
+    }
+
+    private function autoGrade(Quiz $quiz, array $answers): float
+    {
+        $quiz->load('questions');
+        $totalPoints = 0;
+        $earnedPoints = 0;
+
+        foreach ($quiz->questions as $question) {
+            $totalPoints += $question->points;
+            $answer = $answers[$question->id] ?? null;
+
+            if ($answer === null) {
+                continue;
+            }
+
+            $content = $question->content;
+
+            switch ($question->type) {
+                case 'multiple_choice':
+                    if (isset($content['correct_answer']) && strtolower(trim($answer)) === strtolower(trim($content['correct_answer']))) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+
+                case 'true_false':
+                    $correctBool = $content['correct_answer'] ?? null;
+                    $answerBool = filter_var($answer, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($correctBool === $answerBool) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+
+                case 'identification':
+                    $acceptableAnswers = array_map('strtolower', array_map('trim', $content['correct_answers'] ?? []));
+                    if (in_array(strtolower(trim($answer)), $acceptableAnswers)) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+
+                case 'coding':
+                case 'essay':
+                    // These require manual grading; award 0 for now
+                    break;
+            }
+        }
+
+        return $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100, 2) : 0;
+    }
+}
