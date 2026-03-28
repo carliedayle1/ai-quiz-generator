@@ -3,7 +3,7 @@ export interface User {
     name: string;
     email: string;
     email_verified_at?: string;
-    role: 'teacher' | 'student';
+    role: 'teacher' | 'student' | 'admin';
 }
 
 export interface ClassModel {
@@ -65,6 +65,19 @@ export interface ExamLog {
     event_type: string;
     metadata: Record<string, any> | null;
     created_at: string;
+}
+
+export interface Invitation {
+    id: number;
+    invited_by: number;
+    email: string;
+    role: 'teacher' | 'student' | 'admin';
+    token: string;
+    expires_at: string;
+    accepted_at: string | null;
+    created_at: string;
+    updated_at: string;
+    invited_by_user?: User;
 }
 
 export type PageProps<
