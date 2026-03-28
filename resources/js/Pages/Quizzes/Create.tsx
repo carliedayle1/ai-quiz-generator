@@ -233,7 +233,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                             {/* Question Type Breakdown */}
                             <div>
                                 <Label className="mb-3 block">Question Types & Counts</Label>
-                                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="flex flex-col gap-3">
                                     {QUESTION_TYPES.map((qt) => (
                                         <div
                                             key={qt.key}
