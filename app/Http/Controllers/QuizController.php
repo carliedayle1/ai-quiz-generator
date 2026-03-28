@@ -7,6 +7,7 @@ use App\Models\Question;
 use App\Models\Quiz;
 use App\Services\QuizGeneratorService;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Inertia\Inertia;
 
 class QuizController extends Controller
@@ -54,7 +55,7 @@ class QuizController extends Controller
         }
     }
 
-    public function store(ClassModel $class, Request $request)
+    public function store(ClassModel $class, Request $request, QuizGeneratorService $service)
     {
         if ($class->user_id !== $request->user()->id) {
             abort(403);
@@ -70,9 +71,19 @@ class QuizController extends Controller
             'questions.*.points' => 'required|integer|min:1',
         ]);
 
+        $description = $validated['description'] ?? null;
+        if (empty($description)) {
+            try {
+                $typeCounts = collect($validated['questions'])->pluck('type')->countBy()->toArray();
+                $description = $service->generateDescription($validated['title'], $typeCounts);
+            } catch (\Exception $e) {
+                Log::warning('Failed to auto-generate description', ['error' => $e->getMessage()]);
+            }
+        }
+
         $quiz = $class->quizzes()->create([
             'title' => $validated['title'],
-            'description' => $validated['description'] ?? null,
+            'description' => $description,
             'time_limit' => $validated['time_limit'] ?? null,
         ]);
 

@@ -130,6 +130,49 @@ PROMPT;
         return $prompt;
     }
 
+    public function generateDescription(string $title, array $typeCounts): string
+    {
+        if (empty($this->apiKey)) {
+            return '';
+        }
+
+        $typeLabels = [
+            'multiple_choice' => 'Multiple Choice',
+            'true_false' => 'True/False',
+            'identification' => 'Identification',
+            'coding' => 'Coding',
+            'essay' => 'Essay',
+        ];
+
+        $parts = [];
+        foreach ($typeCounts as $type => $count) {
+            $label = $typeLabels[$type] ?? $type;
+            $parts[] = "{$count} {$label}";
+        }
+        $breakdown = implode(', ', $parts);
+        $total = array_sum($typeCounts);
+
+        $prompt = "Generate a 1-2 sentence quiz description for a quiz titled \"{$title}\" containing {$total} questions ({$breakdown}). Keep it concise and informative for students. Return only the description text, no quotes or formatting.";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(15)->post($this->apiUrl, [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'user', 'content' => $prompt],
+            ],
+            'temperature' => 0.7,
+            'max_tokens' => 150,
+        ]);
+
+        if (!$response->successful()) {
+            return '';
+        }
+
+        return trim($response->json('choices.0.message.content', ''));
+    }
+
     private function validateQuestions(array $questions): array
     {
         $validated = [];
