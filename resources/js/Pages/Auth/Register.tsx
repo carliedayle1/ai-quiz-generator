@@ -3,16 +3,23 @@ import InputLabel from '@/Components/InputLabel';
 import PrimaryButton from '@/Components/PrimaryButton';
 import TextInput from '@/Components/TextInput';
 import GuestLayout from '@/Layouts/GuestLayout';
+import { Badge } from '@/Components/ui/badge';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { FormEventHandler } from 'react';
 
-export default function Register() {
+interface InvitationData {
+    email: string;
+    role: string;
+    token: string;
+}
+
+export default function Register({ invitation }: { invitation?: InvitationData }) {
     const { data, setData, post, processing, errors, reset } = useForm({
         name: '',
-        email: '',
+        email: invitation?.email || '',
         password: '',
         password_confirmation: '',
-        role: 'student' as 'teacher' | 'student',
+        token: invitation?.token || '',
     });
 
     const submit: FormEventHandler = (e) => {
@@ -23,9 +30,41 @@ export default function Register() {
         });
     };
 
+    if (!invitation) {
+        return (
+            <GuestLayout>
+                <Head title="Register" />
+                <div className="text-center py-8">
+                    <h2 className="text-lg font-bold text-foreground mb-2">
+                        Invitation Required
+                    </h2>
+                    <p className="text-sm text-muted-foreground mb-4">
+                        Registration is by invitation only. Please contact an administrator
+                        to receive an invitation link.
+                    </p>
+                    <Link
+                        href={route('login')}
+                        className="text-sm text-primary underline hover:text-primary/80"
+                    >
+                        Back to Login
+                    </Link>
+                </div>
+            </GuestLayout>
+        );
+    }
+
     return (
         <GuestLayout>
             <Head title="Register" />
+
+            <div className="mb-4 text-center">
+                <p className="text-sm text-muted-foreground">
+                    You've been invited to join as
+                </p>
+                <Badge variant="default" className="mt-1 text-sm">
+                    {invitation.role.charAt(0).toUpperCase() + invitation.role.slice(1)}
+                </Badge>
+            </div>
 
             <form onSubmit={submit}>
                 <div>
@@ -53,11 +92,13 @@ export default function Register() {
                         type="email"
                         name="email"
                         value={data.email}
-                        className="mt-1 block w-full"
+                        className="mt-1 block w-full bg-muted"
                         autoComplete="username"
-                        onChange={(e) => setData('email', e.target.value)}
-                        required
+                        readOnly
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                        Email is set by your invitation and cannot be changed.
+                    </p>
 
                     <InputError message={errors.email} className="mt-2" />
                 </div>
@@ -104,34 +145,7 @@ export default function Register() {
                     />
                 </div>
 
-                <div className="mt-4">
-                    <InputLabel htmlFor="role" value="I am a..." />
-
-                    <div className="mt-1 flex gap-4">
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                name="role"
-                                value="student"
-                                checked={data.role === 'student'}
-                                onChange={() => setData('role', 'student')}
-                            />
-                            <span className="text-sm">Student</span>
-                        </label>
-                        <label className="flex items-center gap-2">
-                            <input
-                                type="radio"
-                                name="role"
-                                value="teacher"
-                                checked={data.role === 'teacher'}
-                                onChange={() => setData('role', 'teacher')}
-                            />
-                            <span className="text-sm">Teacher</span>
-                        </label>
-                    </div>
-
-                    <InputError message={errors.role} className="mt-2" />
-                </div>
+                <input type="hidden" name="token" value={data.token} />
 
                 <div className="mt-4 flex items-center justify-end">
                     <Link
