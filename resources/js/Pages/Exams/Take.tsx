@@ -16,7 +16,7 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
         quiz.time_limit ? quiz.time_limit * 60 : null
     );
 
-    const { tabSwitchCount, warningVisible } = useAntiCheat(submission.id);
+    const { tabSwitchCount, copyPasteAttempts, warningVisible, warningMessage } = useAntiCheat(submission.id, true);
 
     // Timer
     useEffect(() => {
@@ -70,9 +70,15 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
                     </h2>
                     <div className="flex items-center gap-4">
                         {tabSwitchCount > 0 && (
-                            <div className="flex items-center gap-1 text-sm text-destructive">
+                            <div className="flex items-center gap-1 text-sm text-destructive font-bold">
                                 <AlertTriangle className="h-4 w-4" />
-                                {tabSwitchCount} tab switch{tabSwitchCount !== 1 ? 'es' : ''} detected
+                                {tabSwitchCount} tab switch{tabSwitchCount !== 1 ? 'es' : ''}
+                            </div>
+                        )}
+                        {copyPasteAttempts > 0 && (
+                            <div className="flex items-center gap-1 text-sm text-destructive font-bold">
+                                <AlertTriangle className="h-4 w-4" />
+                                {copyPasteAttempts} copy/paste attempt{copyPasteAttempts !== 1 ? 's' : ''}
                             </div>
                         )}
                         {timeLeft !== null && (
@@ -90,10 +96,12 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
             {/* Anti-cheat warning overlay */}
             {warningVisible && (
                 <div className="fixed inset-0 z-50 bg-destructive/90 flex items-center justify-center">
-                    <div className="text-center text-white">
+                    <div className="text-center text-white p-6 border-3 border-white shadow-brutal-lg bg-destructive max-w-md mx-4">
                         <AlertTriangle className="mx-auto h-16 w-16 mb-4" />
-                        <h2 className="text-lg sm:text-2xl font-bold mb-2">Tab Switch Detected!</h2>
-                        <p>Please stay on this page during the exam.</p>
+                        <h2 className="text-lg sm:text-2xl font-bold mb-2 uppercase tracking-wide">
+                            Violation Detected!
+                        </h2>
+                        <p className="font-medium">{warningMessage || 'Please stay on this page during the exam.'}</p>
                         <p className="mt-2 text-sm opacity-80">This event has been logged.</p>
                     </div>
                 </div>

@@ -7,11 +7,16 @@ return new class extends Migration
 {
     public function up(): void
     {
-        DB::statement("ALTER TABLE users MODIFY role ENUM('teacher', 'student', 'admin') DEFAULT 'student'");
+        // MySQL requires MODIFY to change enum; SQLite stores enum as varchar and doesn't need this
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY role ENUM('teacher', 'student', 'admin') DEFAULT 'student'");
+        }
     }
 
     public function down(): void
     {
-        DB::statement("ALTER TABLE users MODIFY role ENUM('teacher', 'student') DEFAULT 'student'");
+        if (DB::getDriverName() === 'mysql') {
+            DB::statement("ALTER TABLE users MODIFY role ENUM('teacher', 'student') DEFAULT 'student'");
+        }
     }
 };
