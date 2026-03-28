@@ -23,7 +23,12 @@ export default function Result({ submission }: PageProps<{ submission: Submissio
                         <p className="text-sm text-muted-foreground mt-1">{quiz.title}</p>
                     </div>
                     <div className="text-right">
-                        <div className="text-3xl font-bold text-foreground">
+                        {submission.earned_points !== null && submission.total_points !== null && (
+                            <div className="text-3xl font-bold text-foreground">
+                                {submission.earned_points}/{submission.total_points}
+                            </div>
+                        )}
+                        <div className={`font-bold text-foreground ${submission.earned_points !== null ? 'text-lg text-muted-foreground' : 'text-3xl'}`}>
                             {submission.score !== null ? `${submission.score}%` : 'Pending'}
                         </div>
                     </div>

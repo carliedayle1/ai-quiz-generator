@@ -57,11 +57,13 @@ class SubmissionController extends Controller
             'answers' => 'required|array',
         ]);
 
-        $score = $this->autoGrade($quiz, $validated['answers']);
+        $gradeResult = $this->autoGrade($quiz, $validated['answers']);
 
         $submission->update([
             'answers' => $validated['answers'],
-            'score' => $score,
+            'score' => $gradeResult['percentage'],
+            'earned_points' => $gradeResult['earned'],
+            'total_points' => $gradeResult['total'],
             'submitted_at' => now(),
         ]);
 
@@ -87,7 +89,7 @@ class SubmissionController extends Controller
         ]);
     }
 
-    private function autoGrade(Quiz $quiz, array $answers): float
+    private function autoGrade(Quiz $quiz, array $answers): array
     {
         $quiz->load('questions');
         $totalPoints = 0;
@@ -132,6 +134,12 @@ class SubmissionController extends Controller
             }
         }
 
-        return $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100, 2) : 0;
+        $percentage = $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100, 2) : 0;
+
+        return [
+            'percentage' => $percentage,
+            'earned' => $earnedPoints,
+            'total' => $totalPoints,
+        ];
     }
 }

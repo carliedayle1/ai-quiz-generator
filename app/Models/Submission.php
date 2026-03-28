@@ -11,13 +11,15 @@ class Submission extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['quiz_id', 'user_id', 'answers', 'score', 'submitted_at'];
+    protected $fillable = ['quiz_id', 'user_id', 'answers', 'score', 'earned_points', 'total_points', 'submitted_at'];
 
     protected function casts(): array
     {
         return [
             'answers' => 'array',
             'score' => 'decimal:2',
+            'earned_points' => 'decimal:2',
+            'total_points' => 'decimal:2',
             'submitted_at' => 'datetime',
         ];
     }

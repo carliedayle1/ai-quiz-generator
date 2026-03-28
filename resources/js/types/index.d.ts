@@ -50,6 +50,8 @@ export interface Submission {
     user_id: number;
     answers: Record<string, any> | null;
     score: number | null;
+    earned_points: number | null;
+    total_points: number | null;
     submitted_at: string | null;
     created_at: string;
     student?: User;
