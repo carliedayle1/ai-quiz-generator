@@ -82,6 +82,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
     const [genError, setGenError] = useState('');
 
     const [topic, setTopic] = useState('');
+    const [referenceFile, setReferenceFile] = useState<File | null>(null);
     const [difficulty, setDifficulty] = useState('medium');
     const [typeCounts, setTypeCounts] = useState<Record<string, number>>({
         multiple_choice: 5,
@@ -120,19 +121,33 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
         setGenerating(true);
         setGenError('');
 
-        // Build breakdown for the prompt
         const breakdown: Record<string, number> = {};
         for (const [key, count] of Object.entries(typeCounts)) {
             if (count > 0) breakdown[key] = count;
         }
 
         try {
-            const response = await axios.post(route('quizzes.generate', classData.id), {
-                topic,
-                num_questions: totalQuestions,
-                difficulty,
-                question_types_breakdown: breakdown,
-            });
+            let response;
+            if (referenceFile) {
+                const formData = new FormData();
+                formData.append('topic', topic);
+                formData.append('num_questions', String(totalQuestions));
+                formData.append('difficulty', difficulty);
+                Object.entries(breakdown).forEach(([key, count]) => {
+                    formData.append(`question_types_breakdown[${key}]`, String(count));
+                });
+                formData.append('reference_file', referenceFile);
+                response = await axios.post(route('quizzes.generate', classData.id), formData, {
+                    headers: { 'Content-Type': 'multipart/form-data' },
+                });
+            } else {
+                response = await axios.post(route('quizzes.generate', classData.id), {
+                    topic,
+                    num_questions: totalQuestions,
+                    difficulty,
+                    question_types_breakdown: breakdown,
+                });
+            }
 
             setGeneratedQuestions(response.data.questions);
         } catch (err: any) {
@@ -228,6 +243,31 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                         </SelectContent>
                                     </Select>
                                 </div>
+                            </div>
+
+                            {/* Reference File Upload */}
+                            <div>
+                                <Label htmlFor="reference_file">Reference File (optional)</Label>
+                                <div className="flex items-center gap-3 mt-1">
+                                    <Input
+                                        id="reference_file"
+                                        type="file"
+                                        accept=".pdf,.txt,.md"
+                                        onChange={(e) => setReferenceFile(e.target.files?.[0] || null)}
+                                        className="flex-1"
+                                    />
+                                    {referenceFile && (
+                                        <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                            setReferenceFile(null);
+                                            (document.getElementById('reference_file') as HTMLInputElement).value = '';
+                                        }}>
+                                            Remove
+                                        </Button>
+                                    )}
+                                </div>
+                                <p className="text-xs text-muted-foreground mt-1">
+                                    Upload a PDF, TXT, or MD file to use as reference material for generating questions.
+                                </p>
                             </div>
 
                             {/* Question Type Breakdown */}

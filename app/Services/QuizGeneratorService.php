@@ -37,13 +37,15 @@ PROMPT;
         $this->model = config('services.groq.model', 'llama-3.3-70b-versatile');
     }
 
-    public function generate(string $topic, int $numQuestions = 10, string $difficulty = 'medium', array $questionTypes = []): array
+    public function generate(string $topic, int $numQuestions = 10, string $difficulty = 'medium', array $questionTypes = [], ?string $referenceText = null): array
     {
         if (empty($this->apiKey)) {
             throw new InvalidArgumentException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
         }
 
-        $userPrompt = $this->buildUserPrompt($topic, $numQuestions, $difficulty, $questionTypes);
+        $userPrompt = $this->buildUserPrompt($topic, $numQuestions, $difficulty, $questionTypes, $referenceText);
+
+        $maxTokens = $referenceText ? 8192 : 4096;
 
         $response = Http::withHeaders([
             'Authorization' => 'Bearer ' . $this->apiKey,
@@ -55,7 +57,7 @@ PROMPT;
                 ['role' => 'user', 'content' => $userPrompt],
             ],
             'temperature' => 0.7,
-            'max_tokens' => 4096,
+            'max_tokens' => $maxTokens,
             'response_format' => ['type' => 'json_object'],
         ]);
 
@@ -90,7 +92,7 @@ PROMPT;
         return $this->validateQuestions($questions);
     }
 
-    private function buildUserPrompt(string $topic, int $numQuestions, string $difficulty, array $questionTypes): string
+    private function buildUserPrompt(string $topic, int $numQuestions, string $difficulty, array $questionTypes, ?string $referenceText = null): string
     {
         $prompt = "Generate exactly {$numQuestions} questions about: {$topic}. Difficulty level: {$difficulty}.";
 
@@ -126,6 +128,10 @@ PROMPT;
 
         $prompt .= " Each question should have appropriate points (1-5 based on difficulty and type).";
         $prompt .= " Return a JSON object with a \"questions\" key containing the array of questions.";
+
+        if ($referenceText) {
+            $prompt .= "\n\nUse the following reference material to generate questions:\n---\n{$referenceText}\n---";
+        }
 
         return $prompt;
     }

@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ClassModel;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Services\FileTextExtractor;
 use App\Services\QuizGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -39,14 +40,22 @@ class QuizController extends Controller
             'question_types_breakdown.identification' => 'nullable|integer|min:0|max:50',
             'question_types_breakdown.coding' => 'nullable|integer|min:0|max:50',
             'question_types_breakdown.essay' => 'nullable|integer|min:0|max:50',
+            'reference_file' => 'nullable|file|mimes:pdf,txt,md|max:10240',
         ]);
 
         try {
+            $referenceText = null;
+            if ($request->hasFile('reference_file')) {
+                $extractor = app(FileTextExtractor::class);
+                $referenceText = $extractor->extract($request->file('reference_file'));
+            }
+
             $questions = $service->generate(
                 $validated['topic'],
                 $validated['num_questions'],
                 $validated['difficulty'],
                 $validated['question_types_breakdown'] ?? [],
+                $referenceText,
             );
 
             return response()->json(['questions' => $questions]);
