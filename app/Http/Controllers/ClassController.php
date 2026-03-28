@@ -47,7 +47,7 @@ class ClassController extends Controller
             abort(403);
         }
 
-        $class->load(['quizzes', 'students', 'teacher']);
+        $class->load(['quizzes.questions:id,quiz_id,type', 'students', 'teacher']);
 
         return Inertia::render('Classes/Show', [
             'classData' => $class,

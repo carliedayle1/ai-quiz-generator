@@ -82,10 +82,28 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                                                 )}
                                             </CardHeader>
                                             <CardContent>
-                                                <div className="flex items-center gap-4 text-sm text-muted-foreground">
-                                                    {quiz.time_limit && (
-                                                        <span>{quiz.time_limit} min</span>
+                                                <div className="flex flex-wrap items-center gap-2 text-sm text-muted-foreground">
+                                                    {quiz.questions && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {quiz.questions.length} item{quiz.questions.length !== 1 ? 's' : ''}
+                                                        </Badge>
                                                     )}
+                                                    {quiz.time_limit && (
+                                                        <Badge variant="outline" className="text-xs">
+                                                            {quiz.time_limit} min
+                                                        </Badge>
+                                                    )}
+                                                    {quiz.questions && (() => {
+                                                        const typeCounts = quiz.questions.reduce((acc, q) => {
+                                                            acc[q.type] = (acc[q.type] || 0) + 1;
+                                                            return acc;
+                                                        }, {} as Record<string, number>);
+                                                        return Object.entries(typeCounts).map(([type, count]) => (
+                                                            <Badge key={type} variant="secondary" className="text-xs">
+                                                                {count} {type.replace(/_/g, ' ')}
+                                                            </Badge>
+                                                        ));
+                                                    })()}
                                                 </div>
                                             </CardContent>
                                         </Card>
