@@ -12,6 +12,9 @@ import {
     PanelLeftOpen,
     Menu,
     X,
+    Shield,
+    Users as UsersIcon,
+    Mail,
 } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { cn } from '@/lib/utils';
@@ -64,6 +67,34 @@ export default function Authenticated({
             >
                 Classes
             </SidebarNavLink>
+            {user.role === 'admin' && (
+                <>
+                    <SidebarNavLink
+                        href={route('admin.dashboard')}
+                        active={route().current('admin.dashboard')}
+                        icon={Shield}
+                        collapsed={collapsed}
+                    >
+                        Admin
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('admin.users')}
+                        active={route().current('admin.users')}
+                        icon={UsersIcon}
+                        collapsed={collapsed}
+                    >
+                        Users
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('admin.invitations')}
+                        active={route().current('admin.invitations')}
+                        icon={Mail}
+                        collapsed={collapsed}
+                    >
+                        Invitations
+                    </SidebarNavLink>
+                </>
+            )}
         </>
     );
 
@@ -85,6 +116,34 @@ export default function Authenticated({
             >
                 Classes
             </SidebarNavLink>
+            {user.role === 'admin' && (
+                <>
+                    <SidebarNavLink
+                        href={route('admin.dashboard')}
+                        active={route().current('admin.dashboard')}
+                        icon={Shield}
+                        collapsed={false}
+                    >
+                        Admin
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('admin.users')}
+                        active={route().current('admin.users')}
+                        icon={UsersIcon}
+                        collapsed={false}
+                    >
+                        Users
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('admin.invitations')}
+                        active={route().current('admin.invitations')}
+                        icon={Mail}
+                        collapsed={false}
+                    >
+                        Invitations
+                    </SidebarNavLink>
+                </>
+            )}
         </>
     );
 

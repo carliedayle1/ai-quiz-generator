@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ExamLogController;
 use App\Http\Controllers\ProfileController;
@@ -20,6 +21,9 @@ Route::get('/', function () {
 
 Route::get('/dashboard', function () {
     $user = request()->user();
+    if ($user->isAdmin()) {
+        return redirect()->route('admin.dashboard');
+    }
     if ($user->isTeacher()) {
         return redirect()->route('classes.index');
     }
@@ -54,6 +58,16 @@ Route::middleware('auth')->group(function () {
 
     // Anti-cheat logs
     Route::post('/submissions/{submission}/logs', [ExamLogController::class, 'store'])->name('exam-logs.store');
+
+    // Admin routes
+    Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
+        Route::get('/', [AdminController::class, 'dashboard'])->name('dashboard');
+        Route::get('/users', [AdminController::class, 'users'])->name('users');
+        Route::get('/invitations', [AdminController::class, 'invitations'])->name('invitations');
+        Route::post('/invitations', [AdminController::class, 'sendInvitation'])->name('invitations.send');
+        Route::delete('/invitations/{invitation}', [AdminController::class, 'revokeInvitation'])->name('invitations.revoke');
+        Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.destroy');
+    });
 });
 
 require __DIR__.'/auth.php';

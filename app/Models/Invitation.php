@@ -23,6 +23,11 @@ class Invitation extends Model
         return $this->belongsTo(User::class, 'invited_by');
     }
 
+    public function invitedByUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'invited_by');
+    }
+
     public function isExpired(): bool
     {
         return $this->expires_at->isPast();
