@@ -146,6 +146,12 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
         setGeneratedQuestions((prev) => prev.filter((_, i) => i !== index));
     };
 
+    const updateQuestionPoints = (index: number, points: number) => {
+        setGeneratedQuestions((prev) =>
+            prev.map((q, i) => (i === index ? { ...q, points: Math.max(1, Math.min(100, points)) } : q))
+        );
+    };
+
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
 
@@ -400,9 +406,17 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                                                             <span className="text-sm font-medium text-muted-foreground">
                                                                                 {typeIndex + 1}.
                                                                             </span>
-                                                                            <span className="text-sm text-muted-foreground">
-                                                                                {q.points} pt{q.points !== 1 ? 's' : ''}
-                                                                            </span>
+                                                                            <div className="flex items-center gap-1">
+                                                                                <Input
+                                                                                    type="number"
+                                                                                    min="1"
+                                                                                    max="100"
+                                                                                    value={q.points}
+                                                                                    onChange={(e) => updateQuestionPoints(q.originalIndex, parseInt(e.target.value) || 1)}
+                                                                                    className="h-6 w-14 text-center text-xs px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                                                                                />
+                                                                                <span className="text-xs text-muted-foreground">pts</span>
+                                                                            </div>
                                                                         </div>
                                                                         <p className="text-foreground">{q.question}</p>
 
