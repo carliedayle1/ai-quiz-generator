@@ -177,7 +177,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
     return (
         <AuthenticatedLayout
             header={
-                <h2 className="text-xl font-semibold leading-tight text-foreground">
+                <h2 className="text-xl font-bold leading-tight text-foreground">
                     Create Quiz for {classData.name}
                 </h2>
             }
@@ -231,10 +231,10 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                     {QUESTION_TYPES.map((qt) => (
                                         <div
                                             key={qt.key}
-                                            className={`flex items-center justify-between rounded-lg border p-3 transition-colors ${
+                                            className={`flex items-center justify-between border-3 border-foreground p-3 transition-colors ${
                                                 typeCounts[qt.key] > 0
                                                     ? 'border-primary bg-primary/5'
-                                                    : 'border-border'
+                                                    : 'border-foreground'
                                             }`}
                                         >
                                             <div className="flex items-center gap-3">
@@ -279,9 +279,9 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                             </div>
 
                             {/* Summary & Generate */}
-                            <div className="flex items-center justify-between pt-2 border-t">
+                            <div className="flex items-center justify-between pt-2 border-t-3 border-foreground">
                                 <div className="text-sm text-muted-foreground">
-                                    Total: <span className="font-semibold text-foreground">{totalQuestions}</span> question{totalQuestions !== 1 ? 's' : ''}
+                                    Total: <span className="font-bold text-foreground">{totalQuestions}</span> question{totalQuestions !== 1 ? 's' : ''}
                                     {totalQuestions > 0 && (
                                         <span className="ml-2">
                                             ({Object.entries(typeCounts)

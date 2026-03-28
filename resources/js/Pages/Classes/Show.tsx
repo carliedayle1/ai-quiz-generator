@@ -29,7 +29,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-foreground">
+                        <h2 className="text-xl font-bold leading-tight text-foreground">
                             {classData.name}
                         </h2>
                         {classData.description && (
@@ -69,7 +69,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                                         key={quiz.id}
                                         href={isTeacher ? route('quizzes.show', quiz.id) : (quiz.is_published ? route('quizzes.take', quiz.id) : '#')}
                                     >
-                                        <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                                        <Card className="hover:shadow-brutal transition-shadow cursor-pointer">
                                             <CardHeader>
                                                 <div className="flex items-center justify-between">
                                                     <CardTitle className="text-lg">{quiz.title}</CardTitle>

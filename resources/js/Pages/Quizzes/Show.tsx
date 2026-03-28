@@ -29,7 +29,7 @@ export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeac
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-foreground">
+                        <h2 className="text-xl font-bold leading-tight text-foreground">
                             {quiz.title}
                         </h2>
                         {quiz.description && (

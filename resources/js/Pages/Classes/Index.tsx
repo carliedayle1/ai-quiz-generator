@@ -54,7 +54,7 @@ export default function Index({ classes }: PageProps<{ classes: ClassModel[] }>)
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-foreground">
+                    <h2 className="text-xl font-bold leading-tight text-foreground">
                         My Classes
                     </h2>
                     <div className="flex gap-2">
@@ -154,7 +154,7 @@ export default function Index({ classes }: PageProps<{ classes: ClassModel[] }>)
                     {classes.length === 0 ? (
                         <div className="text-center py-12">
                             <BookOpen className="mx-auto h-12 w-12 text-muted-foreground" />
-                            <h3 className="mt-2 text-sm font-semibold text-foreground">No classes</h3>
+                            <h3 className="mt-2 text-sm font-bold text-foreground">No classes</h3>
                             <p className="mt-1 text-sm text-muted-foreground">
                                 {isTeacher
                                     ? 'Get started by creating a new class.'
@@ -165,7 +165,7 @@ export default function Index({ classes }: PageProps<{ classes: ClassModel[] }>)
                         <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
                             {classes.map((cls) => (
                                 <Link key={cls.id} href={route('classes.show', cls.id)}>
-                                    <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                                    <Card className="hover:shadow-brutal transition-shadow cursor-pointer">
                                         <CardHeader>
                                             <CardTitle className="text-lg">{cls.name}</CardTitle>
                                             {cls.description && (

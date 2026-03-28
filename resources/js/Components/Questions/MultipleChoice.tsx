@@ -15,10 +15,10 @@ export default function MultipleChoice({ question, value, onChange }: Props) {
             {options.map((option, index) => (
                 <label
                     key={index}
-                    className={`flex items-center gap-3 rounded-lg border p-3 cursor-pointer transition-colors ${
+                    className={`flex items-center gap-3 border-3 border-foreground p-3 cursor-pointer transition-colors ${
                         value === option
                             ? 'border-primary bg-primary/5'
-                            : 'border-border hover:bg-accent'
+                            : 'border-foreground hover:bg-accent'
                     }`}
                 >
                     <input

@@ -65,7 +65,7 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
         <AuthenticatedLayout
             header={
                 <div className="flex items-center justify-between">
-                    <h2 className="text-xl font-semibold leading-tight text-foreground">
+                    <h2 className="text-xl font-bold leading-tight text-foreground">
                         {quiz.title}
                     </h2>
                     <div className="flex items-center gap-4">

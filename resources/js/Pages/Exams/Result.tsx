@@ -17,7 +17,7 @@ export default function Result({ submission }: PageProps<{ submission: Submissio
             header={
                 <div className="flex items-center justify-between">
                     <div>
-                        <h2 className="text-xl font-semibold leading-tight text-foreground">
+                        <h2 className="text-xl font-bold leading-tight text-foreground">
                             {isTeacher ? `${submission.student?.name}'s Submission` : 'Your Results'}
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">{quiz.title}</p>
