@@ -1,10 +1,20 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
-import Dropdown from '@/Components/Dropdown';
-import NavLink from '@/Components/NavLink';
-import ResponsiveNavLink from '@/Components/ResponsiveNavLink';
+import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
-import { PropsWithChildren, ReactNode, useState } from 'react';
+import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
+import {
+    LayoutDashboard,
+    GraduationCap,
+    User,
+    LogOut,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Menu,
+    X,
+} from 'lucide-react';
+import { Button } from '@/Components/ui/button';
+import { cn } from '@/lib/utils';
 
 export default function Authenticated({
     header,
@@ -12,179 +22,253 @@ export default function Authenticated({
 }: PropsWithChildren<{ header?: ReactNode }>) {
     const user = usePage().props.auth.user;
 
-    const [showingNavigationDropdown, setShowingNavigationDropdown] =
-        useState(false);
+    const [collapsed, setCollapsed] = useState(() => {
+        if (typeof window !== 'undefined') {
+            return localStorage.getItem('sidebar-collapsed') === 'true';
+        }
+        return false;
+    });
+
+    const [mobileOpen, setMobileOpen] = useState(false);
+
+    useEffect(() => {
+        localStorage.setItem('sidebar-collapsed', String(collapsed));
+    }, [collapsed]);
+
+    useEffect(() => {
+        if (mobileOpen) {
+            document.body.style.overflow = 'hidden';
+        } else {
+            document.body.style.overflow = '';
+        }
+        return () => {
+            document.body.style.overflow = '';
+        };
+    }, [mobileOpen]);
+
+    const navLinks = (
+        <>
+            <SidebarNavLink
+                href={route('dashboard')}
+                active={route().current('dashboard')}
+                icon={LayoutDashboard}
+                collapsed={collapsed}
+            >
+                Dashboard
+            </SidebarNavLink>
+            <SidebarNavLink
+                href={route('classes.index')}
+                active={route().current('classes.*') || route().current('quizzes.*')}
+                icon={GraduationCap}
+                collapsed={collapsed}
+            >
+                Classes
+            </SidebarNavLink>
+        </>
+    );
+
+    const mobileNavLinks = (
+        <>
+            <SidebarNavLink
+                href={route('dashboard')}
+                active={route().current('dashboard')}
+                icon={LayoutDashboard}
+                collapsed={false}
+            >
+                Dashboard
+            </SidebarNavLink>
+            <SidebarNavLink
+                href={route('classes.index')}
+                active={route().current('classes.*') || route().current('quizzes.*')}
+                icon={GraduationCap}
+                collapsed={false}
+            >
+                Classes
+            </SidebarNavLink>
+        </>
+    );
+
+    const sidebar = (
+        <aside
+            className={cn(
+                'fixed inset-y-0 left-0 z-30 hidden md:flex flex-col border-r-3 border-foreground bg-card transition-all duration-200',
+                collapsed ? 'w-16' : 'w-64'
+            )}
+        >
+            {/* Logo */}
+            <div className={cn(
+                'flex items-center border-b-3 border-foreground h-16',
+                collapsed ? 'justify-center px-2' : 'px-4 gap-3'
+            )}>
+                <Link href="/">
+                    <ApplicationLogo className="h-10 w-10 shrink-0" />
+                </Link>
+                {!collapsed && (
+                    <Link href="/" className="font-extrabold text-lg text-foreground tracking-tight">
+                        QuizAI
+                    </Link>
+                )}
+            </div>
+
+            {/* Nav links */}
+            <nav className="flex-1 flex flex-col gap-1 p-2 overflow-y-auto">
+                {navLinks}
+            </nav>
+
+            {/* Bottom section */}
+            <div className="border-t-3 border-foreground p-2 space-y-1">
+                <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-1')}>
+                    <ThemeToggle />
+                    {!collapsed && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCollapsed(true)}
+                        >
+                            <PanelLeftClose className="h-5 w-5" />
+                        </Button>
+                    )}
+                    {collapsed && (
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCollapsed(false)}
+                            className="hidden"
+                        >
+                            <PanelLeftOpen className="h-5 w-5" />
+                        </Button>
+                    )}
+                </div>
+
+                <SidebarNavLink
+                    href={route('profile.edit')}
+                    active={route().current('profile.edit')}
+                    icon={User}
+                    collapsed={collapsed}
+                >
+                    {user.name}
+                </SidebarNavLink>
+
+                <SidebarNavLink
+                    href={route('logout')}
+                    method="post"
+                    as="button"
+                    active={false}
+                    icon={LogOut}
+                    collapsed={collapsed}
+                >
+                    Log Out
+                </SidebarNavLink>
+
+                {collapsed && (
+                    <div className="flex justify-center pt-1">
+                        <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setCollapsed(false)}
+                        >
+                            <PanelLeftOpen className="h-5 w-5" />
+                        </Button>
+                    </div>
+                )}
+            </div>
+        </aside>
+    );
+
+    const mobileOverlay = (
+        <>
+            {/* Mobile hamburger button */}
+            <div className="fixed top-0 left-0 right-0 z-20 flex md:hidden items-center h-14 px-4 border-b-3 border-foreground bg-card">
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => setMobileOpen(true)}
+                >
+                    <Menu className="h-6 w-6" />
+                </Button>
+                <Link href="/" className="flex items-center gap-2 ml-2">
+                    <ApplicationLogo className="h-8 w-8" />
+                    <span className="font-extrabold text-lg">QuizAI</span>
+                </Link>
+                <div className="ml-auto">
+                    <ThemeToggle />
+                </div>
+            </div>
+
+            {/* Overlay */}
+            {mobileOpen && (
+                <div className="fixed inset-0 z-40 md:hidden">
+                    <div
+                        className="absolute inset-0 bg-foreground/50"
+                        onClick={() => setMobileOpen(false)}
+                    />
+                    <aside className="absolute inset-y-0 left-0 w-72 border-r-3 border-foreground bg-card flex flex-col animate-in slide-in-from-left duration-200">
+                        <div className="flex items-center justify-between h-14 px-4 border-b-3 border-foreground">
+                            <Link href="/" className="flex items-center gap-2">
+                                <ApplicationLogo className="h-8 w-8" />
+                                <span className="font-extrabold text-lg">QuizAI</span>
+                            </Link>
+                            <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => setMobileOpen(false)}
+                            >
+                                <X className="h-5 w-5" />
+                            </Button>
+                        </div>
+
+                        <nav className="flex-1 flex flex-col gap-1 p-2 overflow-y-auto">
+                            {mobileNavLinks}
+                        </nav>
+
+                        <div className="border-t-3 border-foreground p-2 space-y-1">
+                            <SidebarNavLink
+                                href={route('profile.edit')}
+                                active={route().current('profile.edit')}
+                                icon={User}
+                                collapsed={false}
+                            >
+                                {user.name}
+                            </SidebarNavLink>
+                            <SidebarNavLink
+                                href={route('logout')}
+                                method="post"
+                                as="button"
+                                active={false}
+                                icon={LogOut}
+                                collapsed={false}
+                            >
+                                Log Out
+                            </SidebarNavLink>
+                        </div>
+                    </aside>
+                </div>
+            )}
+        </>
+    );
 
     return (
         <div className="min-h-screen bg-background">
-            <nav className="border-b border-border bg-card">
-                <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-                    <div className="flex h-16 justify-between">
-                        <div className="flex">
-                            <div className="flex shrink-0 items-center">
-                                <Link href="/">
-                                    <ApplicationLogo className="block h-9 w-auto fill-current text-foreground" />
-                                </Link>
-                            </div>
+            {sidebar}
+            {mobileOverlay}
 
-                            <div className="hidden space-x-8 sm:-my-px sm:ms-10 sm:flex">
-                                <NavLink
-                                    href={route('dashboard')}
-                                    active={route().current('dashboard')}
-                                >
-                                    Dashboard
-                                </NavLink>
-                                <NavLink
-                                    href={route('classes.index')}
-                                    active={route().current('classes.*')}
-                                >
-                                    Classes
-                                </NavLink>
-                            </div>
+            {/* Main content */}
+            <div className={cn(
+                'transition-all duration-200',
+                'md:ml-64',
+                collapsed && 'md:ml-16',
+                'pt-14 md:pt-0'
+            )}>
+                {header && (
+                    <header className="border-b-3 border-foreground bg-card">
+                        <div className="px-4 py-6 sm:px-6 lg:px-8">
+                            {header}
                         </div>
+                    </header>
+                )}
 
-                        <div className="hidden sm:ms-6 sm:flex sm:items-center gap-2">
-                            <ThemeToggle />
-                            <div className="relative ms-3">
-                                <Dropdown>
-                                    <Dropdown.Trigger>
-                                        <span className="inline-flex rounded-md">
-                                            <button
-                                                type="button"
-                                                className="inline-flex items-center rounded-md border border-transparent bg-card px-3 py-2 text-sm font-medium leading-4 text-muted-foreground transition duration-150 ease-in-out hover:text-foreground focus:outline-none"
-                                            >
-                                                {user.name}
-                                                <svg
-                                                    className="-me-0.5 ms-2 h-4 w-4"
-                                                    xmlns="http://www.w3.org/2000/svg"
-                                                    viewBox="0 0 20 20"
-                                                    fill="currentColor"
-                                                >
-                                                    <path
-                                                        fillRule="evenodd"
-                                                        d="M5.293 7.293a1 1 0 011.414 0L10 10.586l3.293-3.293a1 1 0 111.414 1.414l-4 4a1 1 0 01-1.414 0l-4-4a1 1 0 010-1.414z"
-                                                        clipRule="evenodd"
-                                                    />
-                                                </svg>
-                                            </button>
-                                        </span>
-                                    </Dropdown.Trigger>
-
-                                    <Dropdown.Content>
-                                        <Dropdown.Link href={route('profile.edit')}>
-                                            Profile
-                                        </Dropdown.Link>
-                                        <Dropdown.Link
-                                            href={route('logout')}
-                                            method="post"
-                                            as="button"
-                                        >
-                                            Log Out
-                                        </Dropdown.Link>
-                                    </Dropdown.Content>
-                                </Dropdown>
-                            </div>
-                        </div>
-
-                        <div className="-me-2 flex items-center sm:hidden">
-                            <button
-                                onClick={() =>
-                                    setShowingNavigationDropdown(
-                                        (previousState) => !previousState,
-                                    )
-                                }
-                                className="inline-flex items-center justify-center rounded-md p-2 text-muted-foreground transition duration-150 ease-in-out hover:bg-accent hover:text-foreground focus:bg-accent focus:text-foreground focus:outline-none"
-                            >
-                                <svg
-                                    className="h-6 w-6"
-                                    stroke="currentColor"
-                                    fill="none"
-                                    viewBox="0 0 24 24"
-                                >
-                                    <path
-                                        className={
-                                            !showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M4 6h16M4 12h16M4 18h16"
-                                    />
-                                    <path
-                                        className={
-                                            showingNavigationDropdown
-                                                ? 'inline-flex'
-                                                : 'hidden'
-                                        }
-                                        strokeLinecap="round"
-                                        strokeLinejoin="round"
-                                        strokeWidth="2"
-                                        d="M6 18L18 6M6 6l12 12"
-                                    />
-                                </svg>
-                            </button>
-                        </div>
-                    </div>
-                </div>
-
-                <div
-                    className={
-                        (showingNavigationDropdown ? 'block' : 'hidden') +
-                        ' sm:hidden'
-                    }
-                >
-                    <div className="space-y-1 pb-3 pt-2">
-                        <ResponsiveNavLink
-                            href={route('dashboard')}
-                            active={route().current('dashboard')}
-                        >
-                            Dashboard
-                        </ResponsiveNavLink>
-                        <ResponsiveNavLink
-                            href={route('classes.index')}
-                            active={route().current('classes.*')}
-                        >
-                            Classes
-                        </ResponsiveNavLink>
-                    </div>
-
-                    <div className="border-t border-border pb-1 pt-4">
-                        <div className="px-4">
-                            <div className="text-base font-medium text-foreground">
-                                {user.name}
-                            </div>
-                            <div className="text-sm font-medium text-muted-foreground">
-                                {user.email}
-                            </div>
-                        </div>
-
-                        <div className="mt-3 space-y-1">
-                            <ResponsiveNavLink href={route('profile.edit')}>
-                                Profile
-                            </ResponsiveNavLink>
-                            <ResponsiveNavLink
-                                method="post"
-                                href={route('logout')}
-                                as="button"
-                            >
-                                Log Out
-                            </ResponsiveNavLink>
-                        </div>
-                    </div>
-                </div>
-            </nav>
-
-            {header && (
-                <header className="bg-card shadow">
-                    <div className="mx-auto max-w-7xl px-4 py-6 sm:px-6 lg:px-8">
-                        {header}
-                    </div>
-                </header>
-            )}
-
-            <main>{children}</main>
+                <main>{children}</main>
+            </div>
         </div>
     );
 }
