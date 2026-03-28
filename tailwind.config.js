@@ -55,11 +55,27 @@ export default {
                     DEFAULT: 'hsl(var(--card))',
                     foreground: 'hsl(var(--card-foreground))',
                 },
+                success: {
+                    DEFAULT: 'hsl(var(--success))',
+                    foreground: 'hsl(var(--success-foreground))',
+                },
+                warning: {
+                    DEFAULT: 'hsl(var(--warning))',
+                    foreground: 'hsl(var(--warning-foreground))',
+                },
+            },
+            borderWidth: {
+                3: '3px',
             },
             borderRadius: {
                 lg: 'var(--radius)',
-                md: 'calc(var(--radius) - 2px)',
-                sm: 'calc(var(--radius) - 4px)',
+                md: 'calc(var(--radius))',
+                sm: 'calc(var(--radius))',
+            },
+            boxShadow: {
+                brutal: 'var(--shadow)',
+                'brutal-sm': 'var(--shadow-sm)',
+                'brutal-lg': 'var(--shadow-lg)',
             },
             fontFamily: {
                 sans: ['Figtree', ...defaultTheme.fontFamily.sans],
