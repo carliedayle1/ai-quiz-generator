@@ -27,7 +27,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <div>
                         <h2 className="text-xl font-bold leading-tight text-foreground">
                             {classData.name}
@@ -37,7 +37,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                         )}
                     </div>
                     {isTeacher && (
-                        <div className="flex gap-2">
+                        <div className="flex flex-col sm:flex-row gap-2 w-full sm:w-auto">
                             <Button variant="outline" onClick={copyInviteCode}>
                                 <Copy className="mr-2 h-4 w-4" />
                                 {copied ? 'Copied!' : classData.invite_code}
@@ -63,7 +63,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                     <div>
                         <h3 className="text-lg font-medium text-foreground mb-4">Quizzes</h3>
                         {classData.quizzes && classData.quizzes.length > 0 ? (
-                            <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                            <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                                 {classData.quizzes.map((quiz) => (
                                     <Link
                                         key={quiz.id}

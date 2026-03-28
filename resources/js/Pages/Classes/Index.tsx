@@ -53,7 +53,7 @@ export default function Index({ classes }: PageProps<{ classes: ClassModel[] }>)
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-3">
                     <h2 className="text-xl font-bold leading-tight text-foreground">
                         My Classes
                     </h2>
@@ -162,7 +162,7 @@ export default function Index({ classes }: PageProps<{ classes: ClassModel[] }>)
                             </p>
                         </div>
                     ) : (
-                        <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
                             {classes.map((cls) => (
                                 <Link key={cls.id} href={route('classes.show', cls.id)}>
                                     <Card className="hover:shadow-brutal transition-shadow cursor-pointer">

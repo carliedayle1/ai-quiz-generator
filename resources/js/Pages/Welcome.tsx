@@ -69,7 +69,7 @@ export default function Welcome({
                                 <Sparkles className="h-4 w-4" />
                                 Powered by AI
                             </div>
-                            <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-secondary-foreground max-w-4xl">
+                            <h1 className="text-3xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-secondary-foreground max-w-4xl">
                                 Generate Quizzes in Seconds, Not Hours
                             </h1>
                             <p className="mt-6 text-lg sm:text-xl max-w-2xl text-secondary-foreground/80">
@@ -77,7 +77,7 @@ export default function Welcome({
                                 auto-grade exams with multiple question types. Your students
                                 get instant results.
                             </p>
-                            <div className="mt-10 flex flex-wrap gap-4 justify-center">
+                            <div className="mt-10 flex flex-wrap gap-3 sm:gap-4 justify-center">
                                 {!auth.user && (
                                     <>
                                         <Link href={route('register')}>
@@ -121,7 +121,7 @@ export default function Welcome({
                                 A complete toolkit for modern assessment
                             </p>
                         </div>
-                        <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-4">
+                        <div className="grid gap-6 grid-cols-1 sm:grid-cols-2 lg:grid-cols-4">
                             <Card className="border-l-[6px] border-l-primary">
                                 <CardHeader className="pb-3">
                                     <div className="flex items-center gap-3">
@@ -201,7 +201,7 @@ export default function Welcome({
                                 How It Works
                             </h2>
                         </div>
-                        <div className="grid gap-8 sm:grid-cols-3">
+                        <div className="grid gap-8 grid-cols-1 sm:grid-cols-3">
                             {[
                                 {
                                     step: '01',

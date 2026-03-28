@@ -64,7 +64,7 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
     return (
         <AuthenticatedLayout
             header={
-                <div className="flex items-center justify-between">
+                <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-2">
                     <h2 className="text-xl font-bold leading-tight text-foreground">
                         {quiz.title}
                     </h2>
@@ -92,7 +92,7 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
                 <div className="fixed inset-0 z-50 bg-destructive/90 flex items-center justify-center">
                     <div className="text-center text-white">
                         <AlertTriangle className="mx-auto h-16 w-16 mb-4" />
-                        <h2 className="text-2xl font-bold mb-2">Tab Switch Detected!</h2>
+                        <h2 className="text-lg sm:text-2xl font-bold mb-2">Tab Switch Detected!</h2>
                         <p>Please stay on this page during the exam.</p>
                         <p className="mt-2 text-sm opacity-80">This event has been logged.</p>
                     </div>
@@ -132,7 +132,7 @@ export default function Take({ quiz, submission }: PageProps<{ quiz: Quiz; submi
                                                     <h3 className="font-medium text-foreground">{typeLabels[type]}</h3>
                                                     <Badge variant="outline">{questionsOfType.length}</Badge>
                                                 </div>
-                                                <div className="space-y-4 pl-7">
+                                                <div className="space-y-4 pl-4 sm:pl-7">
                                                     {questionsOfType.map((question, typeIndex) => (
                                                         <QuestionRenderer
                                                             key={question.id}

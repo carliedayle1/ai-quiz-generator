@@ -227,7 +227,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                             {/* Question Type Breakdown */}
                             <div>
                                 <Label className="mb-3 block">Question Types & Counts</Label>
-                                <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+                                <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
                                     {QUESTION_TYPES.map((qt) => (
                                         <div
                                             key={qt.key}
@@ -323,7 +323,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                     <CardTitle>Quiz Details</CardTitle>
                                 </CardHeader>
                                 <CardContent className="space-y-4">
-                                    <div className="grid gap-4 md:grid-cols-2">
+                                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
                                         <div>
                                             <Label htmlFor="title">Quiz Title</Label>
                                             <Input
