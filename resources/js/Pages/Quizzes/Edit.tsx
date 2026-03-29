@@ -236,6 +236,22 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
+                        {/* Make Public toggle */}
+                        <button
+                            type="button"
+                            onClick={() => router.post(route('quizzes.toggle-public', initialQuiz.id), {}, { preserveState: false })}
+                            className={`flex items-center gap-1.5 text-xs border-2 px-2 py-1 transition-colors ${
+                                initialQuiz.is_public
+                                    ? 'border-primary bg-primary/10 text-primary'
+                                    : 'border-border text-muted-foreground hover:border-foreground'
+                            }`}
+                            title={initialQuiz.is_public ? 'Remove from Quiz Bank' : 'Share in Global Quiz Bank'}
+                        >
+                            <span className={`w-7 h-4 rounded-full transition-colors flex items-center px-0.5 ${initialQuiz.is_public ? 'bg-primary' : 'bg-muted'}`}>
+                                <span className={`w-3 h-3 rounded-full bg-white transition-transform ${initialQuiz.is_public ? 'translate-x-3' : 'translate-x-0'}`} />
+                            </span>
+                            Public
+                        </button>
                         <Button variant="outline" onClick={() => setPreviewOpen(true)}>
                             <Eye className="mr-2 h-4 w-4" /> Preview
                         </Button>
