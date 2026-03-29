@@ -50,7 +50,7 @@ export interface Quiz {
 export interface Question {
     id: number;
     quiz_id: number;
-    type: 'multiple_choice' | 'true_false' | 'identification' | 'coding' | 'essay';
+    type: 'multiple_choice' | 'true_false' | 'identification' | 'coding' | 'essay' | 'section_header';
     content: Record<string, any>;
     points: number;
     order: number;

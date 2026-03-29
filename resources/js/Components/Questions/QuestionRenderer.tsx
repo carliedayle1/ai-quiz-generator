@@ -12,6 +12,7 @@ interface Props {
     index: number;
     value: string;
     onChange: (value: string) => void;
+    readOnly?: boolean;
 }
 
 const componentMap: Record<string, React.ComponentType<{ question: Question; value: string; onChange: (v: string) => void }>> = {
@@ -30,7 +31,10 @@ const typeLabels: Record<string, string> = {
     essay: 'Essay',
 };
 
-export default function QuestionRenderer({ question, index, value, onChange }: Props) {
+export default function QuestionRenderer({ question, index, value, onChange, readOnly = false }: Props) {
+    // section_header is rendered by the parent as a divider, not here
+    if (question.type === 'section_header') return null;
+
     const Component = componentMap[question.type];
 
     if (!Component) {

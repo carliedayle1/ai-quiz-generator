@@ -50,8 +50,18 @@ Route::middleware('auth')->group(function () {
         Route::post('/classes/{class}/quizzes/generate', [QuizController::class, 'generate'])->name('quizzes.generate');
         Route::post('/classes/{class}/quizzes', [QuizController::class, 'store'])->name('quizzes.store');
         Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
+        Route::get('/quizzes/{quiz}/edit', [QuizController::class, 'edit'])->name('quizzes.edit');
+        Route::put('/quizzes/{quiz}', [QuizController::class, 'update'])->name('quizzes.update');
+        Route::delete('/quizzes/{quiz}', [QuizController::class, 'destroy'])->name('quizzes.destroy');
         Route::post('/quizzes/{quiz}/publish', [QuizController::class, 'publish'])->name('quizzes.publish');
         Route::post('/quizzes/{quiz}/unpublish', [QuizController::class, 'unpublish'])->name('quizzes.unpublish');
+        Route::post('/quizzes/{quiz}/schedule', [QuizController::class, 'schedule'])->name('quizzes.schedule');
+
+        // Question CRUD (order matters: reorder before {question})
+        Route::post('/quizzes/{quiz}/questions/reorder', [QuizController::class, 'reorderQuestions'])->name('questions.reorder');
+        Route::post('/quizzes/{quiz}/questions', [QuizController::class, 'storeQuestion'])->name('questions.store');
+        Route::put('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'updateQuestion'])->name('questions.update');
+        Route::delete('/quizzes/{quiz}/questions/{question}', [QuizController::class, 'destroyQuestion'])->name('questions.destroy');
 
         // Exam taking
         Route::get('/quizzes/{quiz}/take', [SubmissionController::class, 'take'])->name('quizzes.take');

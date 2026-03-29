@@ -12,6 +12,11 @@ class Question extends Model
 
     protected $fillable = ['quiz_id', 'type', 'content', 'points', 'order'];
 
+    public function isSectionHeader(): bool
+    {
+        return $this->type === 'section_header';
+    }
+
     protected function casts(): array
     {
         return [

@@ -106,7 +106,149 @@ class QuizController extends Controller
             ]);
         }
 
-        return redirect()->route('quizzes.show', $quiz);
+        return redirect()->route('quizzes.edit', $quiz);
+    }
+
+    public function edit(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $quiz->load(['questions', 'classModel']);
+
+        return Inertia::render('Quizzes/Edit', [
+            'quiz' => $quiz,
+            'classData' => $quiz->classModel,
+        ]);
+    }
+
+    public function update(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'title' => 'required|string|max:255',
+            'description' => 'nullable|string|max:1000',
+            'time_limit' => 'nullable|integer|min:1|max:480',
+        ]);
+
+        $quiz->update($validated);
+
+        return back();
+    }
+
+    public function destroy(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $classId = $quiz->class_id;
+        $quiz->delete();
+
+        return redirect()->route('classes.show', $classId);
+    }
+
+    public function schedule(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'available_from' => 'nullable|date',
+            'available_until' => 'nullable|date|after_or_equal:available_from',
+            'due_date' => 'nullable|date',
+        ]);
+
+        $status = 'published';
+        if (!empty($validated['available_from']) && now()->lt($validated['available_from'])) {
+            $status = 'scheduled';
+        }
+
+        $quiz->update(array_merge($validated, ['status' => $status]));
+
+        return back();
+    }
+
+    public function storeQuestion(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'required|in:multiple_choice,true_false,identification,coding,essay,section_header',
+            'content' => 'required|array',
+            'points' => 'required|integer|min:0',
+        ]);
+
+        $maxOrder = $quiz->questions()->max('order') ?? -1;
+
+        $question = $quiz->questions()->create([
+            'type' => $validated['type'],
+            'content' => $validated['content'],
+            'points' => $validated['points'],
+            'order' => $maxOrder + 1,
+        ]);
+
+        return response()->json(['question' => $question]);
+    }
+
+    public function updateQuestion(Quiz $quiz, Question $question, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id || $question->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'type' => 'sometimes|in:multiple_choice,true_false,identification,coding,essay,section_header',
+            'content' => 'sometimes|array',
+            'points' => 'sometimes|integer|min:0',
+        ]);
+
+        $question->update($validated);
+
+        return response()->json(['question' => $question->fresh()]);
+    }
+
+    public function destroyQuestion(Quiz $quiz, Question $question, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id || $question->quiz_id !== $quiz->id) {
+            abort(403);
+        }
+
+        $deletedOrder = $question->order;
+        $question->delete();
+
+        // Re-sequence orders after the deleted position
+        $quiz->questions()
+            ->where('order', '>', $deletedOrder)
+            ->decrement('order');
+
+        return response()->json(['success' => true]);
+    }
+
+    public function reorderQuestions(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'questions' => 'required|array',
+            'questions.*.id' => 'required|integer',
+            'questions.*.order' => 'required|integer|min:0',
+        ]);
+
+        foreach ($validated['questions'] as $item) {
+            $quiz->questions()->where('id', $item['id'])->update(['order' => $item['order']]);
+        }
+
+        return response()->json(['success' => true]);
     }
 
     public function show(Quiz $quiz, Request $request)
