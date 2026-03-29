@@ -23,6 +23,19 @@ CRITICAL INSTRUCTION: Respond ONLY with a valid JSON array. Do not include markd
 5. 'essay' (Requires: question, grading_rubric string, points)
 PROMPT;
 
+    private const CONTEXT_SYSTEM_PROMPT = <<<'PROMPT'
+You are an expert educational assessment generator. Your PRIMARY knowledge source is the document provided by the teacher — generate questions EXCLUSIVELY from that document's content.
+CRITICAL INSTRUCTION: Respond ONLY with a valid JSON object with a "questions" key. Do not include markdown formatting, code fences, or explanations. Every object must include a 'type' key matching one of these exact strings:
+
+1. 'multiple_choice' (Requires: question, options array, correct_answer string, points)
+2. 'true_false' (Requires: question, correct_answer boolean, points)
+3. 'identification' (Requires: question, correct_answers array of acceptable strings, points)
+4. 'coding' (Requires: question, language, grading_rubric_keywords array, points)
+5. 'essay' (Requires: question, grading_rubric string, points)
+
+All questions must be answerable directly from the provided document. Do not introduce outside knowledge.
+PROMPT;
+
     private const VALID_TYPES = [
         'multiple_choice',
         'true_false',
@@ -88,6 +101,90 @@ PROMPT;
         if (isset($decoded['questions']) && is_array($decoded['questions'])) {
             $questions = $decoded['questions'];
         }
+
+        return $this->validateQuestions($questions);
+    }
+
+    /**
+     * Context Engine mode: document is the PRIMARY source, instructions are supplementary.
+     */
+    public function generateFromContext(string $documentText, string $instructions, int $numQuestions, string $difficulty, array $questionTypes): array
+    {
+        if (empty($this->apiKey)) {
+            throw new InvalidArgumentException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
+        }
+
+        $breakdown = [];
+        foreach ($questionTypes as $type => $count) {
+            if (is_string($type) && is_int($count) && $count > 0) {
+                $breakdown[$type] = $count;
+            }
+        }
+
+        $typeLabels = [
+            'multiple_choice' => 'Multiple Choice',
+            'true_false' => 'True/False',
+            'identification' => 'Identification',
+            'coding' => 'Coding',
+            'essay' => 'Essay',
+        ];
+
+        $parts = [];
+        foreach ($breakdown as $type => $count) {
+            $label = $typeLabels[$type] ?? $type;
+            $parts[] = "{$count} {$label}";
+        }
+
+        $userPrompt = "Generate exactly {$numQuestions} questions. Difficulty: {$difficulty}.";
+        if (!empty($parts)) {
+            $userPrompt .= " Use this exact breakdown: " . implode(', ', $parts) . ".";
+        }
+        $userPrompt .= " Each question should have appropriate points (1-5 based on difficulty and type).";
+        $userPrompt .= " Return a JSON object with a \"questions\" key containing the array.";
+
+        if (!empty(trim($instructions))) {
+            $userPrompt .= "\n\nAdditional teacher instructions: {$instructions}";
+        }
+
+        $userPrompt .= "\n\n--- BEGIN DOCUMENT ---\n{$documentText}\n--- END DOCUMENT ---";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(90)->post($this->apiUrl, [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'system', 'content' => self::CONTEXT_SYSTEM_PROMPT],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            'temperature' => 0.5,
+            'max_tokens' => 8192,
+            'response_format' => ['type' => 'json_object'],
+        ]);
+
+        if (!$response->successful()) {
+            Log::error('Groq API error (context mode)', [
+                'status' => $response->status(),
+                'body' => $response->body(),
+            ]);
+            throw new \RuntimeException('Failed to generate quiz from document. API returned status: ' . $response->status());
+        }
+
+        $content = $response->json('choices.0.message.content', '');
+        $content = preg_replace('/^```(?:json)?\s*/m', '', $content);
+        $content = preg_replace('/\s*```$/m', '', $content);
+        $content = trim($content);
+
+        $decoded = json_decode($content, true);
+
+        if (!is_array($decoded)) {
+            Log::error('Groq returned non-JSON (context mode)', ['content' => $content]);
+            throw new \RuntimeException('AI returned invalid JSON. Please try again.');
+        }
+
+        $questions = isset($decoded['questions']) && is_array($decoded['questions'])
+            ? $decoded['questions']
+            : $decoded;
 
         return $this->validateQuestions($questions);
     }

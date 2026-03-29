@@ -9,8 +9,10 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Card, CardContent } from '@/Components/ui/card';
 import QuizPreviewDialog from '@/Components/QuizPreviewDialog';
 import QuizSchedulePanel from '@/Components/QuizSchedulePanel';
+import QuestionBankPicker from '@/Components/QuestionBankPicker';
 import {
     ArrowLeft,
+    Database,
     GripVertical,
     Plus,
     Trash2,
@@ -65,6 +67,7 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
     const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved'>('saved');
     const [previewOpen, setPreviewOpen] = useState(false);
     const [scheduleOpen, setScheduleOpen] = useState(false);
+    const [bankPickerOpen, setBankPickerOpen] = useState(false);
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const saveTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -107,6 +110,22 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
             setSelectedIndex(questions.length);
         } catch (e) {
             console.error('Failed to add question', e);
+        }
+    };
+
+    // Import questions from question bank
+    const importFromBank = async (items: { type: string; content: Record<string, any>; points: number }[]) => {
+        for (const item of items) {
+            try {
+                const resp = await axios.post(route('questions.store', initialQuiz.id), {
+                    type: item.type,
+                    content: item.content,
+                    points: item.points,
+                });
+                setQuestions(prev => [...prev, resp.data.question]);
+            } catch (e) {
+                console.error('Failed to import question', e);
+            }
         }
     };
 
@@ -295,6 +314,15 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                     {/* Add question buttons */}
                     <div className="p-2 border-t-2 border-border space-y-1">
                         <p className="text-xs font-bold text-muted-foreground uppercase px-1">Add</p>
+                        <Button
+                            variant="outline"
+                            size="sm"
+                            className="w-full text-xs justify-start gap-1 h-7 mb-1"
+                            onClick={() => setBankPickerOpen(true)}
+                        >
+                            <Database className="h-3 w-3" />
+                            Import from Bank
+                        </Button>
                         <div className="grid grid-cols-2 gap-1">
                             {(Object.keys(TYPE_LABELS) as QuestionType[]).map(type => (
                                 <Button
@@ -339,6 +367,11 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                 quiz={initialQuiz}
                 open={scheduleOpen}
                 onClose={() => setScheduleOpen(false)}
+            />
+            <QuestionBankPicker
+                open={bankPickerOpen}
+                onClose={() => setBankPickerOpen(false)}
+                onImport={importFromBank}
             />
         </AuthenticatedLayout>
     );

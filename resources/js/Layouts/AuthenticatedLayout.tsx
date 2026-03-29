@@ -4,6 +4,7 @@ import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 import {
+    Database,
     LayoutDashboard,
     GraduationCap,
     User,
@@ -69,6 +70,16 @@ export default function Authenticated({
                     >
                         Classes
                     </SidebarNavLink>
+                    {user.role === 'teacher' && (
+                        <SidebarNavLink
+                            href={route('question-bank.index')}
+                            active={route().current('question-bank.*')}
+                            icon={Database}
+                            collapsed={collapsed}
+                        >
+                            Question Bank
+                        </SidebarNavLink>
+                    )}
                 </>
             )}
             {user.role === 'admin' && (

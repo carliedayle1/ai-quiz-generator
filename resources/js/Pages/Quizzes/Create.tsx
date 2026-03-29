@@ -8,8 +8,10 @@ import { Label } from '@/Components/ui/label';
 import { Textarea } from '@/Components/ui/textarea';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/Components/ui/select';
 import { Badge } from '@/Components/ui/badge';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/Components/ui/tabs';
 import { FormEventHandler, useState } from 'react';
 import {
+    BookOpen,
     CheckSquare,
     Code,
     FileText,
@@ -20,6 +22,7 @@ import {
     Sparkles,
     ToggleLeft,
     Trash2,
+    Upload,
 } from 'lucide-react';
 import axios from 'axios';
 
@@ -81,8 +84,15 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
     const [generatedQuestions, setGeneratedQuestions] = useState<GeneratedQuestion[]>([]);
     const [genError, setGenError] = useState('');
 
+    // Standard mode
     const [topic, setTopic] = useState('');
     const [referenceFile, setReferenceFile] = useState<File | null>(null);
+
+    // Context Engine mode
+    const [contextFile, setContextFile] = useState<File | null>(null);
+    const [instructions, setInstructions] = useState('');
+
+    // Shared
     const [difficulty, setDifficulty] = useState('medium');
     const [typeCounts, setTypeCounts] = useState<Record<string, number>>({
         multiple_choice: 5,
@@ -116,15 +126,26 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
         questions: [] as { type: string; content: Record<string, any>; points: number }[],
     });
 
-    const handleGenerate = async () => {
-        if (totalQuestions === 0) return;
-        setGenerating(true);
-        setGenError('');
+    const questionTypeLabels: Record<string, string> = {};
+    const questionTypeColors: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {};
+    for (const qt of QUESTION_TYPES) {
+        questionTypeLabels[qt.key] = qt.label;
+        questionTypeColors[qt.key] = qt.badgeVariant;
+    }
 
+    const buildBreakdown = () => {
         const breakdown: Record<string, number> = {};
         for (const [key, count] of Object.entries(typeCounts)) {
             if (count > 0) breakdown[key] = count;
         }
+        return breakdown;
+    };
+
+    const handleGenerateStandard = async () => {
+        if (totalQuestions === 0) return;
+        setGenerating(true);
+        setGenError('');
+        const breakdown = buildBreakdown();
 
         try {
             let response;
@@ -148,10 +169,36 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                     question_types_breakdown: breakdown,
                 });
             }
-
             setGeneratedQuestions(response.data.questions);
         } catch (err: any) {
             setGenError(err.response?.data?.error || 'Failed to generate quiz. Please try again.');
+        } finally {
+            setGenerating(false);
+        }
+    };
+
+    const handleGenerateContext = async () => {
+        if (!contextFile || totalQuestions === 0) return;
+        setGenerating(true);
+        setGenError('');
+        const breakdown = buildBreakdown();
+
+        try {
+            const formData = new FormData();
+            formData.append('mode', 'context');
+            formData.append('context_file', contextFile);
+            formData.append('instructions', instructions);
+            formData.append('num_questions', String(totalQuestions));
+            formData.append('difficulty', difficulty);
+            Object.entries(breakdown).forEach(([key, count]) => {
+                formData.append(`question_types_breakdown[${key}]`, String(count));
+            });
+            const response = await axios.post(route('quizzes.generate', classData.id), formData, {
+                headers: { 'Content-Type': 'multipart/form-data' },
+            });
+            setGeneratedQuestions(response.data.questions);
+        } catch (err: any) {
+            setGenError(err.response?.data?.error || 'Failed to generate quiz from document. Please try again.');
         } finally {
             setGenerating(false);
         }
@@ -169,31 +216,118 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
 
     const handleSave: FormEventHandler = (e) => {
         e.preventDefault();
-
         const questions = generatedQuestions.map((q) => {
             const { type, question, points, ...rest } = q;
-            return {
-                type,
-                content: { question, ...rest },
-                points,
-            };
+            return { type, content: { question, ...rest }, points };
         });
-
         form.transform((data) => ({
             ...data,
             questions,
             time_limit: data.time_limit ? parseInt(data.time_limit) : null,
         }));
-
         form.post(route('quizzes.store', classData.id));
     };
 
-    const questionTypeLabels: Record<string, string> = {};
-    const questionTypeColors: Record<string, 'default' | 'secondary' | 'outline' | 'destructive'> = {};
-    for (const qt of QUESTION_TYPES) {
-        questionTypeLabels[qt.key] = qt.label;
-        questionTypeColors[qt.key] = qt.badgeVariant;
-    }
+    // ── Shared question type breakdown picker ────────────────────────────────
+    const TypeBreakdownPicker = () => (
+        <div>
+            <Label className="mb-3 block">Question Types & Counts</Label>
+            <div className="flex flex-col gap-3">
+                {QUESTION_TYPES.map((qt) => (
+                    <div
+                        key={qt.key}
+                        className={`flex items-center justify-between border-3 p-3 transition-colors ${
+                            typeCounts[qt.key] > 0
+                                ? 'border-primary bg-primary/5'
+                                : 'border-foreground'
+                        }`}
+                    >
+                        <div className="flex items-center gap-3">
+                            <div className="text-muted-foreground">{qt.icon}</div>
+                            <div>
+                                <p className="text-sm font-medium text-foreground">{qt.label}</p>
+                                <p className="text-xs text-muted-foreground">{qt.description}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-1">
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateCount(qt.key, -1)}
+                                disabled={typeCounts[qt.key] <= 0}
+                            >
+                                <Minus className="h-3 w-3" />
+                            </Button>
+                            <Input
+                                type="number"
+                                min="0"
+                                max="50"
+                                value={typeCounts[qt.key]}
+                                onChange={(e) => setCount(qt.key, e.target.value)}
+                                className="h-7 w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
+                            />
+                            <Button
+                                type="button"
+                                variant="outline"
+                                size="icon"
+                                className="h-7 w-7"
+                                onClick={() => updateCount(qt.key, 1)}
+                            >
+                                <Plus className="h-3 w-3" />
+                            </Button>
+                        </div>
+                    </div>
+                ))}
+            </div>
+        </div>
+    );
+
+    const DifficultyAndSummary = ({ onGenerate, disabled }: { onGenerate: () => void; disabled: boolean }) => (
+        <div className="space-y-4">
+            <div>
+                <Label>Difficulty</Label>
+                <Select value={difficulty} onValueChange={setDifficulty}>
+                    <SelectTrigger>
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="easy">Easy</SelectItem>
+                        <SelectItem value="medium">Medium</SelectItem>
+                        <SelectItem value="hard">Hard</SelectItem>
+                    </SelectContent>
+                </Select>
+            </div>
+
+            <div className="flex items-center justify-between pt-2 border-t-3 border-foreground">
+                <div className="text-sm text-muted-foreground">
+                    Total: <span className="font-bold text-foreground">{totalQuestions}</span> question{totalQuestions !== 1 ? 's' : ''}
+                    {totalQuestions > 0 && (
+                        <span className="ml-2">
+                            ({Object.entries(typeCounts)
+                                .filter(([, c]) => c > 0)
+                                .map(([k, c]) => `${c} ${questionTypeLabels[k]}`)
+                                .join(', ')})
+                        </span>
+                    )}
+                </div>
+                <Button onClick={onGenerate} disabled={generating || disabled || totalQuestions === 0}>
+                    {generating ? (
+                        <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Generating...
+                        </>
+                    ) : (
+                        <>
+                            <Sparkles className="mr-2 h-4 w-4" />
+                            Generate Quiz
+                        </>
+                    )}
+                </Button>
+            </div>
+        </div>
+    );
 
     return (
         <AuthenticatedLayout
@@ -215,148 +349,136 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                 AI Quiz Generator
                             </CardTitle>
                             <CardDescription>
-                                Choose a topic, set the difficulty, and pick how many of each question type you want.
+                                Choose a mode: generate from a topic, or upload a document as the primary knowledge source.
                             </CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-6">
-                            {/* Topic & Difficulty */}
-                            <div className="grid gap-4 md:grid-cols-4">
-                                <div className="md:col-span-3">
-                                    <Label htmlFor="topic">Topic</Label>
-                                    <Input
-                                        id="topic"
-                                        value={topic}
-                                        onChange={(e) => setTopic(e.target.value)}
-                                        placeholder="e.g., Photosynthesis in plants, JavaScript closures, World War II"
-                                    />
-                                </div>
-                                <div>
-                                    <Label>Difficulty</Label>
-                                    <Select value={difficulty} onValueChange={setDifficulty}>
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="easy">Easy</SelectItem>
-                                            <SelectItem value="medium">Medium</SelectItem>
-                                            <SelectItem value="hard">Hard</SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </div>
-                            </div>
+                        <CardContent>
+                            <Tabs defaultValue="standard">
+                                <TabsList className="mb-6">
+                                    <TabsTrigger value="standard" className="gap-2">
+                                        <Sparkles className="h-4 w-4" /> Standard Mode
+                                    </TabsTrigger>
+                                    <TabsTrigger value="context" className="gap-2">
+                                        <BookOpen className="h-4 w-4" /> Context Engine
+                                    </TabsTrigger>
+                                </TabsList>
 
-                            {/* Reference File Upload */}
-                            <div>
-                                <Label htmlFor="reference_file">Reference File (optional)</Label>
-                                <div className="flex items-center gap-3 mt-1">
-                                    <Input
-                                        id="reference_file"
-                                        type="file"
-                                        accept=".pdf,.txt,.md"
-                                        onChange={(e) => setReferenceFile(e.target.files?.[0] || null)}
-                                        className="flex-1"
-                                    />
-                                    {referenceFile && (
-                                        <Button type="button" variant="ghost" size="sm" onClick={() => {
-                                            setReferenceFile(null);
-                                            (document.getElementById('reference_file') as HTMLInputElement).value = '';
-                                        }}>
-                                            Remove
-                                        </Button>
-                                    )}
-                                </div>
-                                <p className="text-xs text-muted-foreground mt-1">
-                                    Upload a PDF, TXT, or MD file to use as reference material for generating questions.
-                                </p>
-                            </div>
-
-                            {/* Question Type Breakdown */}
-                            <div>
-                                <Label className="mb-3 block">Question Types & Counts</Label>
-                                <div className="flex flex-col gap-3">
-                                    {QUESTION_TYPES.map((qt) => (
-                                        <div
-                                            key={qt.key}
-                                            className={`flex items-center justify-between border-3 border-foreground p-3 transition-colors ${
-                                                typeCounts[qt.key] > 0
-                                                    ? 'border-primary bg-primary/5'
-                                                    : 'border-foreground'
-                                            }`}
-                                        >
-                                            <div className="flex items-center gap-3">
-                                                <div className="text-muted-foreground">{qt.icon}</div>
-                                                <div>
-                                                    <p className="text-sm font-medium text-foreground">{qt.label}</p>
-                                                    <p className="text-xs text-muted-foreground">{qt.description}</p>
-                                                </div>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-7 w-7"
-                                                    onClick={() => updateCount(qt.key, -1)}
-                                                    disabled={typeCounts[qt.key] <= 0}
-                                                >
-                                                    <Minus className="h-3 w-3" />
-                                                </Button>
-                                                <Input
-                                                    type="number"
-                                                    min="0"
-                                                    max="50"
-                                                    value={typeCounts[qt.key]}
-                                                    onChange={(e) => setCount(qt.key, e.target.value)}
-                                                    className="h-7 w-12 text-center px-1 [appearance:textfield] [&::-webkit-outer-spin-button]:appearance-none [&::-webkit-inner-spin-button]:appearance-none"
-                                                />
-                                                <Button
-                                                    type="button"
-                                                    variant="outline"
-                                                    size="icon"
-                                                    className="h-7 w-7"
-                                                    onClick={() => updateCount(qt.key, 1)}
-                                                >
-                                                    <Plus className="h-3 w-3" />
-                                                </Button>
-                                            </div>
+                                {/* ── Standard Mode ── */}
+                                <TabsContent value="standard" className="space-y-6">
+                                    <div className="grid gap-4 md:grid-cols-1">
+                                        <div>
+                                            <Label htmlFor="topic">Topic</Label>
+                                            <Input
+                                                id="topic"
+                                                value={topic}
+                                                onChange={(e) => setTopic(e.target.value)}
+                                                placeholder="e.g., Photosynthesis in plants, JavaScript closures, World War II"
+                                            />
                                         </div>
-                                    ))}
-                                </div>
-                            </div>
+                                    </div>
 
-                            {/* Summary & Generate */}
-                            <div className="flex items-center justify-between pt-2 border-t-3 border-foreground">
-                                <div className="text-sm text-muted-foreground">
-                                    Total: <span className="font-bold text-foreground">{totalQuestions}</span> question{totalQuestions !== 1 ? 's' : ''}
-                                    {totalQuestions > 0 && (
-                                        <span className="ml-2">
-                                            ({Object.entries(typeCounts)
-                                                .filter(([, c]) => c > 0)
-                                                .map(([k, c]) => `${c} ${questionTypeLabels[k]}`)
-                                                .join(', ')})
-                                        </span>
-                                    )}
-                                </div>
-                                <Button
-                                    onClick={handleGenerate}
-                                    disabled={generating || !topic.trim() || totalQuestions === 0}
-                                >
-                                    {generating ? (
-                                        <>
-                                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                                            Generating...
-                                        </>
-                                    ) : (
-                                        <>
-                                            <Sparkles className="mr-2 h-4 w-4" />
-                                            Generate Quiz
-                                        </>
-                                    )}
-                                </Button>
-                            </div>
+                                    <div>
+                                        <Label htmlFor="reference_file">Reference File (optional)</Label>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <Input
+                                                id="reference_file"
+                                                type="file"
+                                                accept=".pdf,.txt,.md"
+                                                onChange={(e) => setReferenceFile(e.target.files?.[0] || null)}
+                                                className="flex-1"
+                                            />
+                                            {referenceFile && (
+                                                <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                    setReferenceFile(null);
+                                                    (document.getElementById('reference_file') as HTMLInputElement).value = '';
+                                                }}>
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Supplement the topic with content from a PDF, TXT, or MD file.
+                                        </p>
+                                    </div>
+
+                                    <TypeBreakdownPicker />
+
+                                    <DifficultyAndSummary
+                                        onGenerate={handleGenerateStandard}
+                                        disabled={!topic.trim()}
+                                    />
+                                </TabsContent>
+
+                                {/* ── Context Engine Mode ── */}
+                                <TabsContent value="context" className="space-y-6">
+                                    <div className="border-3 border-primary/40 bg-primary/5 p-4 space-y-1">
+                                        <p className="text-sm font-medium flex items-center gap-2">
+                                            <BookOpen className="h-4 w-4 text-primary" />
+                                            Context Engine Mode
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            Upload a document (e.g. lecture notes, a textbook chapter, or an exam reviewer). The AI will generate questions <strong>exclusively</strong> from its content. Use the instructions field to guide focus or style.
+                                        </p>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="context_file">
+                                            Document <span className="text-destructive">*</span>
+                                        </Label>
+                                        <div className="flex items-center gap-3 mt-1">
+                                            <label
+                                                htmlFor="context_file"
+                                                className={`flex flex-1 items-center gap-3 border-3 border-dashed p-4 cursor-pointer transition-colors ${
+                                                    contextFile
+                                                        ? 'border-primary bg-primary/5'
+                                                        : 'border-foreground hover:border-primary hover:bg-primary/5'
+                                                }`}
+                                            >
+                                                <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
+                                                <span className="text-sm text-muted-foreground truncate">
+                                                    {contextFile ? contextFile.name : 'Click to upload PDF, TXT, or MD (max 20 MB)'}
+                                                </span>
+                                                <Input
+                                                    id="context_file"
+                                                    type="file"
+                                                    accept=".pdf,.txt,.md"
+                                                    className="sr-only"
+                                                    onChange={(e) => setContextFile(e.target.files?.[0] || null)}
+                                                />
+                                            </label>
+                                            {contextFile && (
+                                                <Button type="button" variant="ghost" size="sm" onClick={() => {
+                                                    setContextFile(null);
+                                                    (document.getElementById('context_file') as HTMLInputElement).value = '';
+                                                }}>
+                                                    Remove
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+
+                                    <div>
+                                        <Label htmlFor="instructions">Additional Instructions (optional)</Label>
+                                        <Textarea
+                                            id="instructions"
+                                            value={instructions}
+                                            onChange={(e) => setInstructions(e.target.value)}
+                                            placeholder="e.g., Focus on Chapter 3 only. Emphasize concepts from the summary section. Avoid questions about the introduction."
+                                            rows={3}
+                                        />
+                                    </div>
+
+                                    <TypeBreakdownPicker />
+
+                                    <DifficultyAndSummary
+                                        onGenerate={handleGenerateContext}
+                                        disabled={!contextFile}
+                                    />
+                                </TabsContent>
+                            </Tabs>
 
                             {genError && (
-                                <p className="text-sm text-destructive">{genError}</p>
+                                <p className="text-sm text-destructive mt-4">{genError}</p>
                             )}
                         </CardContent>
                     </Card>

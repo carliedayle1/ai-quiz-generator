@@ -40,6 +40,7 @@ export interface Quiz {
     available_until: string | null;
     due_date: string | null;
     status: 'draft' | 'published' | 'scheduled' | 'closed';
+    allow_partial_credit: boolean;
     created_at: string;
     updated_at: string;
     classModel?: ClassModel;

@@ -30,6 +30,40 @@ class QuizController extends Controller
             abort(403);
         }
 
+        $mode = $request->input('mode', 'standard');
+
+        if ($mode === 'context') {
+            $request->validate([
+                'context_file' => 'required|file|mimes:pdf,txt,md|max:20480',
+                'instructions' => 'nullable|string|max:1000',
+                'num_questions' => 'required|integer|min:1|max:50',
+                'difficulty' => 'required|in:easy,medium,hard',
+                'question_types_breakdown' => 'nullable|array',
+                'question_types_breakdown.multiple_choice' => 'nullable|integer|min:0|max:50',
+                'question_types_breakdown.true_false' => 'nullable|integer|min:0|max:50',
+                'question_types_breakdown.identification' => 'nullable|integer|min:0|max:50',
+                'question_types_breakdown.coding' => 'nullable|integer|min:0|max:50',
+                'question_types_breakdown.essay' => 'nullable|integer|min:0|max:50',
+            ]);
+
+            try {
+                $extractor = app(FileTextExtractor::class);
+                $documentText = $extractor->extract($request->file('context_file'));
+
+                $questions = $service->generateFromContext(
+                    $documentText,
+                    $request->input('instructions', ''),
+                    (int) $request->input('num_questions'),
+                    $request->input('difficulty'),
+                    $request->input('question_types_breakdown', []),
+                );
+
+                return response()->json(['questions' => $questions]);
+            } catch (\Exception $e) {
+                return response()->json(['error' => $e->getMessage()], 422);
+            }
+        }
+
         $validated = $request->validate([
             'topic' => 'required|string|max:500',
             'num_questions' => 'required|integer|min:1|max:50',

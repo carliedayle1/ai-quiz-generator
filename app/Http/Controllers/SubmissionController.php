@@ -142,4 +142,79 @@ class SubmissionController extends Controller
             'total' => $totalPoints,
         ];
     }
+
+    /**
+     * Teacher manually grades a question (essay / coding) with optional partial credit.
+     */
+    public function gradeQuestion(Submission $submission, Request $request)
+    {
+        $quiz = $submission->quiz;
+
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'question_id' => 'required|integer',
+            'points_awarded' => 'required|numeric|min:0',
+        ]);
+
+        $questionId = $validated['question_id'];
+        $pointsAwarded = (float) $validated['points_awarded'];
+
+        $manualGrades = $submission->manual_grades ?? [];
+        $manualGrades[$questionId] = $pointsAwarded;
+        $submission->manual_grades = $manualGrades;
+
+        // Recalculate score including manual grades
+        $quiz->load('questions');
+        $totalPoints = $quiz->questions->sum('points');
+        $answers = $submission->answers ?? [];
+
+        $earnedPoints = 0;
+        foreach ($quiz->questions as $question) {
+            if (isset($manualGrades[$question->id])) {
+                $earnedPoints += $manualGrades[$question->id];
+                continue;
+            }
+
+            $answer = $answers[$question->id] ?? null;
+            if ($answer === null) continue;
+            $content = $question->content;
+
+            switch ($question->type) {
+                case 'multiple_choice':
+                    if (isset($content['correct_answer']) && strtolower(trim($answer)) === strtolower(trim($content['correct_answer']))) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+                case 'true_false':
+                    $correctBool = $content['correct_answer'] ?? null;
+                    $answerBool = filter_var($answer, FILTER_VALIDATE_BOOLEAN, FILTER_NULL_ON_FAILURE);
+                    if ($correctBool === $answerBool) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+                case 'identification':
+                    $acceptable = array_map('strtolower', array_map('trim', $content['correct_answers'] ?? []));
+                    if (in_array(strtolower(trim($answer)), $acceptable)) {
+                        $earnedPoints += $question->points;
+                    }
+                    break;
+            }
+        }
+
+        $percentage = $totalPoints > 0 ? round(($earnedPoints / $totalPoints) * 100, 2) : 0;
+
+        $submission->earned_points = $earnedPoints;
+        $submission->total_points = $totalPoints;
+        $submission->score = $percentage;
+        $submission->save();
+
+        return response()->json([
+            'score' => $percentage,
+            'earned_points' => $earnedPoints,
+            'manual_grades' => $submission->manual_grades,
+        ]);
+    }
 }

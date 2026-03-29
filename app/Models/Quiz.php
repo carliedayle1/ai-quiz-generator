@@ -13,13 +13,14 @@ class Quiz extends Model
 
     protected $fillable = [
         'class_id', 'title', 'description', 'time_limit', 'is_published',
-        'available_from', 'available_until', 'due_date', 'status',
+        'available_from', 'available_until', 'due_date', 'status', 'allow_partial_credit',
     ];
 
     protected function casts(): array
     {
         return [
             'is_published' => 'boolean',
+            'allow_partial_credit' => 'boolean',
             'time_limit' => 'integer',
             'available_from' => 'datetime',
             'available_until' => 'datetime',

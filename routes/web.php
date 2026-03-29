@@ -4,6 +4,7 @@ use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ExamLogController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SubmissionController;
 use Illuminate\Foundation\Application;
@@ -67,9 +68,18 @@ Route::middleware('auth')->group(function () {
         Route::get('/quizzes/{quiz}/take', [SubmissionController::class, 'take'])->name('quizzes.take');
         Route::post('/quizzes/{quiz}/submit', [SubmissionController::class, 'submit'])->name('quizzes.submit');
         Route::get('/submissions/{submission}/result', [SubmissionController::class, 'result'])->name('submissions.result');
+        Route::post('/submissions/{submission}/grade-question', [SubmissionController::class, 'gradeQuestion'])->name('submissions.grade-question');
 
         // Anti-cheat logs
         Route::post('/submissions/{submission}/logs', [ExamLogController::class, 'store'])->name('exam-logs.store');
+
+        // Question Bank (teachers only, but middleware handles that via role check in controller)
+        Route::get('/question-bank', [QuestionBankController::class, 'index'])->name('question-bank.index');
+        Route::post('/question-bank', [QuestionBankController::class, 'store'])->name('question-bank.store');
+        Route::post('/question-bank/bulk', [QuestionBankController::class, 'bulkStore'])->name('question-bank.bulk-store');
+        Route::get('/question-bank/search', [QuestionBankController::class, 'search'])->name('question-bank.search');
+        Route::put('/question-bank/{questionBankItem}', [QuestionBankController::class, 'update'])->name('question-bank.update');
+        Route::delete('/question-bank/{questionBankItem}', [QuestionBankController::class, 'destroy'])->name('question-bank.destroy');
     });
 
     // Admin routes
