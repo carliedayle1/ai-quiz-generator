@@ -65,6 +65,8 @@ Route::middleware('auth')->group(function () {
         Route::get('/users', [AdminController::class, 'users'])->name('users');
         Route::get('/invitations', [AdminController::class, 'invitations'])->name('invitations');
         Route::post('/invitations', [AdminController::class, 'sendInvitation'])->name('invitations.send');
+        Route::post('/invitations/bulk', [AdminController::class, 'bulkInvite'])->name('invitations.bulk');
+        Route::get('/invitations/sample', [AdminController::class, 'downloadSample'])->name('invitations.sample');
         Route::delete('/invitations/{invitation}', [AdminController::class, 'revokeInvitation'])->name('invitations.revoke');
         Route::delete('/users/{user}', [AdminController::class, 'deleteUser'])->name('users.destroy');
     });

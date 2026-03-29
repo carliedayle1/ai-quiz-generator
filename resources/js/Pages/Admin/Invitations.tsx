@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head, router, useForm } from '@inertiajs/react';
-import { Invitation, PageProps, User } from '@/types';
+import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { BulkInviteResults, Invitation, PageProps, User } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -13,8 +13,8 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/Components/ui/select';
-import { Send, Trash2 } from 'lucide-react';
-import { FormEventHandler } from 'react';
+import { Download, Send, Trash2, Upload, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { FormEventHandler, useRef, useState } from 'react';
 
 interface InvitationWithRelation extends Invitation {
     invited_by_user?: User;
@@ -41,27 +41,46 @@ function getStatus(invitation: InvitationWithRelation): { label: string; variant
 
 function roleBadgeVariant(role: string) {
     switch (role) {
-        case 'admin':
-            return 'destructive' as const;
-        case 'teacher':
-            return 'default' as const;
-        case 'student':
-            return 'secondary' as const;
-        default:
-            return 'outline' as const;
+        case 'admin':   return 'destructive' as const;
+        case 'teacher': return 'default' as const;
+        case 'student': return 'secondary' as const;
+        default:        return 'outline' as const;
     }
 }
 
 export default function Invitations({ invitations }: PageProps<{ invitations: PaginatedInvitations }>) {
-    const form = useForm({
-        email: '',
-        role: 'teacher',
-    });
+    const { flash } = usePage<PageProps>().props;
+    const bulkResults: BulkInviteResults | undefined = flash?.bulk_results;
+
+    const form = useForm({ email: '', role: 'teacher' });
+    const bulkForm = useForm<{ file: File | null }>({ file: null });
+
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [fileName, setFileName] = useState<string>('');
 
     const submitInvitation: FormEventHandler = (e) => {
         e.preventDefault();
         form.post(route('admin.invitations.send'), {
             onSuccess: () => form.reset(),
+        });
+    };
+
+    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0] ?? null;
+        bulkForm.setData('file', file);
+        setFileName(file?.name ?? '');
+    };
+
+    const submitBulk: FormEventHandler = (e) => {
+        e.preventDefault();
+        if (!bulkForm.data.file) return;
+        bulkForm.post(route('admin.invitations.bulk'), {
+            forceFormData: true,
+            onSuccess: () => {
+                bulkForm.reset();
+                setFileName('');
+                if (fileInputRef.current) fileInputRef.current.value = '';
+            },
         });
     };
 
@@ -81,7 +100,8 @@ export default function Invitations({ invitations }: PageProps<{ invitations: Pa
 
             <div className="py-12">
                 <div className="mx-auto max-w-7xl sm:px-6 lg:px-8 space-y-6">
-                    {/* Send Invitation Form */}
+
+                    {/* Single Invite Form */}
                     <Card>
                         <CardHeader>
                             <CardTitle>Send Invitation</CardTitle>
@@ -125,6 +145,97 @@ export default function Invitations({ invitations }: PageProps<{ invitations: Pa
                         </CardContent>
                     </Card>
 
+                    {/* Bulk Import */}
+                    <Card>
+                        <CardHeader className="flex flex-row items-center justify-between">
+                            <CardTitle>Bulk Import</CardTitle>
+                            <a href={route('admin.invitations.sample')}>
+                                <Button variant="outline" size="sm" type="button">
+                                    <Download className="mr-2 h-4 w-4" />
+                                    Download Template
+                                </Button>
+                            </a>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-sm text-muted-foreground">
+                                Upload a <strong>CSV</strong> or <strong>Excel</strong> file with two columns:{' '}
+                                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">email</code> and{' '}
+                                <code className="rounded bg-muted px-1 py-0.5 text-xs font-mono">role</code>.
+                                Valid roles: <em>teacher</em>, <em>student</em>, <em>admin</em>.
+                            </p>
+
+                            <form onSubmit={submitBulk} className="flex flex-col sm:flex-row gap-4 items-end">
+                                <div className="flex-1 grid gap-2">
+                                    <Label>File</Label>
+                                    <div
+                                        className="flex items-center gap-3 border-2 border-dashed border-border px-4 py-3 cursor-pointer hover:border-primary transition-colors"
+                                        onClick={() => fileInputRef.current?.click()}
+                                    >
+                                        <Upload className="h-5 w-5 text-muted-foreground shrink-0" />
+                                        <span className="text-sm text-muted-foreground truncate">
+                                            {fileName || 'Click to choose a CSV or Excel file…'}
+                                        </span>
+                                    </div>
+                                    <input
+                                        ref={fileInputRef}
+                                        type="file"
+                                        accept=".csv,.xlsx,.xls,.txt"
+                                        className="hidden"
+                                        onChange={handleFileChange}
+                                    />
+                                    {bulkForm.errors.file && (
+                                        <p className="text-sm text-destructive">{bulkForm.errors.file}</p>
+                                    )}
+                                </div>
+                                <Button type="submit" disabled={bulkForm.processing || !bulkForm.data.file}>
+                                    <Upload className="mr-2 h-4 w-4" />
+                                    {bulkForm.processing ? 'Importing…' : 'Import'}
+                                </Button>
+                            </form>
+
+                            {/* Bulk Results */}
+                            {bulkResults && (
+                                <div className="space-y-3 pt-2">
+                                    <div className="flex items-center gap-2 border-2 border-foreground bg-success/10 px-4 py-3">
+                                        <CheckCircle2 className="h-5 w-5 text-success shrink-0" />
+                                        <span className="text-sm font-semibold">
+                                            {bulkResults.sent} invitation{bulkResults.sent !== 1 ? 's' : ''} sent successfully.
+                                        </span>
+                                    </div>
+
+                                    {bulkResults.skipped.length > 0 && (
+                                        <div className="border-2 border-foreground">
+                                            <div className="flex items-center gap-2 bg-warning/10 px-4 py-2 border-b-2 border-foreground">
+                                                <AlertTriangle className="h-4 w-4 text-warning shrink-0" />
+                                                <span className="text-sm font-bold">
+                                                    {bulkResults.skipped.length} row{bulkResults.skipped.length !== 1 ? 's' : ''} skipped
+                                                </span>
+                                            </div>
+                                            <div className="overflow-x-auto">
+                                                <table className="w-full text-sm">
+                                                    <thead>
+                                                        <tr className="border-b-2 border-foreground bg-muted">
+                                                            <th className="text-left py-2 px-4 font-bold">Email</th>
+                                                            <th className="text-left py-2 px-4 font-bold">Reason</th>
+                                                        </tr>
+                                                    </thead>
+                                                    <tbody>
+                                                        {bulkResults.skipped.map((row, i) => (
+                                                            <tr key={i} className="border-b border-border last:border-0">
+                                                                <td className="py-2 px-4 font-mono text-xs">{row.email}</td>
+                                                                <td className="py-2 px-4 text-muted-foreground">{row.reason}</td>
+                                                            </tr>
+                                                        ))}
+                                                    </tbody>
+                                                </table>
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+
                     {/* Invitations Table */}
                     <Card>
                         <CardHeader>
@@ -156,9 +267,7 @@ export default function Invitations({ invitations }: PageProps<{ invitations: Pa
                                                         </Badge>
                                                     </td>
                                                     <td className="py-3 px-4">
-                                                        <Badge variant={status.variant}>
-                                                            {status.label}
-                                                        </Badge>
+                                                        <Badge variant={status.variant}>{status.label}</Badge>
                                                     </td>
                                                     <td className="py-3 px-4 text-muted-foreground">
                                                         {invitation.invited_by_user?.name ?? 'Unknown'}
@@ -201,6 +310,7 @@ export default function Invitations({ invitations }: PageProps<{ invitations: Pa
                             )}
                         </CardContent>
                     </Card>
+
                 </div>
             </div>
         </AuthenticatedLayout>

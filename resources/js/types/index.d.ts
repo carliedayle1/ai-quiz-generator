@@ -82,10 +82,19 @@ export interface Invitation {
     invited_by_user?: User;
 }
 
+export interface BulkInviteResults {
+    sent: number;
+    skipped: Array<{ email: string; reason: string }>;
+}
+
 export type PageProps<
     T extends Record<string, unknown> = Record<string, unknown>,
 > = T & {
     auth: {
         user: User;
+    };
+    flash: {
+        success?: string;
+        bulk_results?: BulkInviteResults;
     };
 };
