@@ -15,6 +15,7 @@ import {
     Database,
     GripVertical,
     Plus,
+    Printer,
     Trash2,
     CheckSquare,
     ToggleLeft,
@@ -53,7 +54,7 @@ const DEFAULT_CONTENT: Record<string, object> = {
     multiple_choice: { question: '', options: ['', '', '', ''], correct_answer: '' },
     true_false: { question: '', correct_answer: true },
     identification: { question: '', correct_answers: [''] },
-    coding: { question: '', language: 'JavaScript', grading_rubric_keywords: [] },
+    coding: { question: '', language: 'JavaScript', base_code: '', grading_rubric_keywords: [] },
     essay: { question: '', grading_rubric: '' },
     section_header: { title: '', description: '' },
 };
@@ -230,6 +231,11 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                         <Button variant="outline" onClick={() => setScheduleOpen(true)}>
                             <Calendar className="mr-2 h-4 w-4" /> Schedule
                         </Button>
+                        <Link href={route('quizzes.print', initialQuiz.id)} target="_blank">
+                            <Button variant="outline">
+                                <Printer className="mr-2 h-4 w-4" /> Print
+                            </Button>
+                        </Link>
                         <Button onClick={() => router.post(
                             initialQuiz.status === 'published'
                                 ? route('quizzes.unpublish', initialQuiz.id)
@@ -473,6 +479,17 @@ function QuestionEditor({ question, index, onChange }: {
                                 value={question.content.language ?? ''}
                                 onChange={e => updateContent('language', e.target.value)}
                                 placeholder="JavaScript"
+                            />
+                        </div>
+                        <div>
+                            <Label>Starter Code / Fill-in-the-blank snippet (optional)</Label>
+                            <Textarea
+                                className="mt-1 font-mono text-sm"
+                                value={question.content.base_code ?? ''}
+                                onChange={e => updateContent('base_code', e.target.value)}
+                                placeholder={"// Shown to students above their answer box\nfunction solution() {\n  // your code here\n}"}
+                                rows={5}
+                                spellCheck={false}
                             />
                         </div>
                         <div>

@@ -178,21 +178,15 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
     };
 
     const handleGenerateContext = async () => {
-        if (!contextFile || totalQuestions === 0) return;
+        if (!contextFile || !instructions.trim()) return;
         setGenerating(true);
         setGenError('');
-        const breakdown = buildBreakdown();
 
         try {
             const formData = new FormData();
             formData.append('mode', 'context');
             formData.append('context_file', contextFile);
             formData.append('instructions', instructions);
-            formData.append('num_questions', String(totalQuestions));
-            formData.append('difficulty', difficulty);
-            Object.entries(breakdown).forEach(([key, count]) => {
-                formData.append(`question_types_breakdown[${key}]`, String(count));
-            });
             const response = await axios.post(route('quizzes.generate', classData.id), formData, {
                 headers: { 'Content-Type': 'multipart/form-data' },
             });
@@ -417,7 +411,7 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                             Context Engine Mode
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            Upload a document (e.g. lecture notes, a textbook chapter, or an exam reviewer). The AI will generate questions <strong>exclusively</strong> from its content. Use the instructions field to guide focus or style.
+                                            Upload a document (lecture notes, textbook chapter, or an existing exam). The AI will analyze the document and follow your instructions — extracting existing questions or generating new ones exclusively from the content.
                                         </p>
                                     </div>
 
@@ -458,22 +452,40 @@ export default function Create({ classData }: PageProps<{ classData: ClassModel 
                                     </div>
 
                                     <div>
-                                        <Label htmlFor="instructions">Additional Instructions (optional)</Label>
+                                        <Label htmlFor="instructions">
+                                            Detailed Instructions <span className="text-destructive">*</span>
+                                        </Label>
                                         <Textarea
                                             id="instructions"
                                             value={instructions}
                                             onChange={(e) => setInstructions(e.target.value)}
-                                            placeholder="e.g., Focus on Chapter 3 only. Emphasize concepts from the summary section. Avoid questions about the introduction."
-                                            rows={3}
+                                            placeholder="e.g., Create 10 multiple choice and 5 true/false questions based on this file. Focus on Chapter 3 concepts only."
+                                            rows={5}
+                                            className="mt-1"
                                         />
+                                        <p className="text-xs text-muted-foreground mt-1">
+                                            Tell the AI exactly what to generate — question types, counts, focus areas, difficulty, and style.
+                                        </p>
                                     </div>
 
-                                    <TypeBreakdownPicker />
-
-                                    <DifficultyAndSummary
-                                        onGenerate={handleGenerateContext}
-                                        disabled={!contextFile}
-                                    />
+                                    <div className="flex justify-end pt-2 border-t-3 border-foreground">
+                                        <Button
+                                            onClick={handleGenerateContext}
+                                            disabled={generating || !contextFile || !instructions.trim()}
+                                        >
+                                            {generating ? (
+                                                <>
+                                                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                                                    Analyzing & Generating...
+                                                </>
+                                            ) : (
+                                                <>
+                                                    <Sparkles className="mr-2 h-4 w-4" />
+                                                    Generate from Document
+                                                </>
+                                            )}
+                                        </Button>
+                                    </div>
                                 </TabsContent>
                             </Tabs>
 

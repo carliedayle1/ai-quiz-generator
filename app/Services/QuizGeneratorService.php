@@ -24,7 +24,12 @@ CRITICAL INSTRUCTION: Respond ONLY with a valid JSON array. Do not include markd
 PROMPT;
 
     private const CONTEXT_SYSTEM_PROMPT = <<<'PROMPT'
-You are an expert educational assessment generator. Your PRIMARY knowledge source is the document provided by the teacher — generate questions EXCLUSIVELY from that document's content.
+You are an expert educational assessment generator. Your PRIMARY knowledge source is the document provided by the teacher.
+
+DOCUMENT ANALYSIS — perform this first before generating:
+- If the document IS an EXISTING EXAM, QUESTIONNAIRE, or TEST: Do NOT generate new questions. Instead, extract the existing questions exactly as written, determine the correct answers from the document context, and format them into the required JSON schema.
+- If the document IS REFERENCE MATERIAL (lecture notes, textbook chapter, article, reviewer, etc.): Generate new questions based EXCLUSIVELY on the document content and the teacher's detailed instructions.
+
 CRITICAL INSTRUCTION: Respond ONLY with a valid JSON object with a "questions" key. Do not include markdown formatting, code fences, or explanations. Every object must include a 'type' key matching one of these exact strings:
 
 1. 'multiple_choice' (Requires: question, options array, correct_answer string, points)
@@ -106,46 +111,18 @@ PROMPT;
     }
 
     /**
-     * Context Engine mode: document is the PRIMARY source, instructions are supplementary.
+     * Context Engine mode: document is the PRIMARY source. Instructions drive all question
+     * count, type, and focus decisions — no num_questions or questionTypes params needed.
      */
-    public function generateFromContext(string $documentText, string $instructions, int $numQuestions, string $difficulty, array $questionTypes): array
+    public function generateFromContext(string $documentText, string $instructions): array
     {
         if (empty($this->apiKey)) {
             throw new InvalidArgumentException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
         }
 
-        $breakdown = [];
-        foreach ($questionTypes as $type => $count) {
-            if (is_string($type) && is_int($count) && $count > 0) {
-                $breakdown[$type] = $count;
-            }
-        }
-
-        $typeLabels = [
-            'multiple_choice' => 'Multiple Choice',
-            'true_false' => 'True/False',
-            'identification' => 'Identification',
-            'coding' => 'Coding',
-            'essay' => 'Essay',
-        ];
-
-        $parts = [];
-        foreach ($breakdown as $type => $count) {
-            $label = $typeLabels[$type] ?? $type;
-            $parts[] = "{$count} {$label}";
-        }
-
-        $userPrompt = "Generate exactly {$numQuestions} questions. Difficulty: {$difficulty}.";
-        if (!empty($parts)) {
-            $userPrompt .= " Use this exact breakdown: " . implode(', ', $parts) . ".";
-        }
-        $userPrompt .= " Each question should have appropriate points (1-5 based on difficulty and type).";
+        $userPrompt = "Teacher instructions: {$instructions}";
+        $userPrompt .= "\n\nEach question should have appropriate points (1-5 based on difficulty and type).";
         $userPrompt .= " Return a JSON object with a \"questions\" key containing the array.";
-
-        if (!empty(trim($instructions))) {
-            $userPrompt .= "\n\nAdditional teacher instructions: {$instructions}";
-        }
-
         $userPrompt .= "\n\n--- BEGIN DOCUMENT ---\n{$documentText}\n--- END DOCUMENT ---";
 
         $response = Http::withHeaders([

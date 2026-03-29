@@ -35,15 +35,7 @@ class QuizController extends Controller
         if ($mode === 'context') {
             $request->validate([
                 'context_file' => 'required|file|mimes:pdf,txt,md|max:20480',
-                'instructions' => 'nullable|string|max:1000',
-                'num_questions' => 'required|integer|min:1|max:50',
-                'difficulty' => 'required|in:easy,medium,hard',
-                'question_types_breakdown' => 'nullable|array',
-                'question_types_breakdown.multiple_choice' => 'nullable|integer|min:0|max:50',
-                'question_types_breakdown.true_false' => 'nullable|integer|min:0|max:50',
-                'question_types_breakdown.identification' => 'nullable|integer|min:0|max:50',
-                'question_types_breakdown.coding' => 'nullable|integer|min:0|max:50',
-                'question_types_breakdown.essay' => 'nullable|integer|min:0|max:50',
+                'instructions' => 'required|string|min:10|max:2000',
             ]);
 
             try {
@@ -52,10 +44,7 @@ class QuizController extends Controller
 
                 $questions = $service->generateFromContext(
                     $documentText,
-                    $request->input('instructions', ''),
-                    (int) $request->input('num_questions'),
-                    $request->input('difficulty'),
-                    $request->input('question_types_breakdown', []),
+                    $request->input('instructions'),
                 );
 
                 return response()->json(['questions' => $questions]);
@@ -297,6 +286,20 @@ class QuizController extends Controller
         return Inertia::render('Quizzes/Show', [
             'quiz' => $quiz,
             'isTeacher' => $user->isTeacher(),
+        ]);
+    }
+
+    public function printQuiz(Quiz $quiz, Request $request)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $quiz->load(['questions' => fn($q) => $q->orderBy('order'), 'classModel']);
+
+        return Inertia::render('Quizzes/Print', [
+            'quiz' => $quiz,
+            'classData' => $quiz->classModel,
         ]);
     }
 
