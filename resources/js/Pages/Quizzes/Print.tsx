@@ -155,10 +155,9 @@ export default function Print({ quiz, classData }: PageProps<{ quiz: Quiz; class
                     </div>
                 </div>
 
-                {/* Instructions */}
+                {/* Description */}
                 {quiz.description && (
                     <div className="border border-gray-300 bg-gray-50 p-3 mb-6 text-sm">
-                        <p className="font-bold mb-1">Instructions:</p>
                         <p>{quiz.description}</p>
                     </div>
                 )}
