@@ -217,7 +217,7 @@ export default function Edit({ quiz: initialQuiz, classData, teachers = [] }: Pa
             header={
                 <div className="flex items-center justify-between gap-4 flex-wrap">
                     <div className="flex items-center gap-3">
-                        <Link href={route('classes.show', classData.id)}>
+                        <Link href={classData ? route('classes.show', classData.id) : route('classes.index')}>
                             <Button variant="outline" size="icon">
                                 <ArrowLeft className="h-4 w-4" />
                             </Button>
