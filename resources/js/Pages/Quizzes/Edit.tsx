@@ -14,8 +14,10 @@ import {
     ArrowLeft,
     Database,
     GripVertical,
+    Loader2,
     Plus,
     Printer,
+    Sparkles,
     Trash2,
     CheckSquare,
     ToggleLeft,
@@ -69,6 +71,8 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
     const [previewOpen, setPreviewOpen] = useState(false);
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [bankPickerOpen, setBankPickerOpen] = useState(false);
+    const [aiGenerating, setAiGenerating] = useState(false);
+    const [aiTypePickerOpen, setAiTypePickerOpen] = useState(false);
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const saveTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -127,6 +131,32 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
             } catch (e) {
                 console.error('Failed to import question', e);
             }
+        }
+    };
+
+    // Generate a single AI question of a given type
+    const generateViaAI = async (type: QuestionType) => {
+        setAiTypePickerOpen(false);
+        setAiGenerating(true);
+        try {
+            const resp = await axios.post(route('quizzes.generate-single', initialQuiz.id), { question_type: type });
+            const generated = resp.data.question;
+            // Build content from AI response
+            const { question: questionText, points: aiPoints, ...rest } = generated;
+            const content = { question: questionText ?? '', ...rest };
+            // Store it
+            const storeResp = await axios.post(route('questions.store', initialQuiz.id), {
+                type,
+                content: { ...DEFAULT_CONTENT[type], ...content },
+                points: aiPoints ?? 1,
+            });
+            const newQ: Question = storeResp.data.question;
+            setQuestions(prev => [...prev, newQ]);
+            setSelectedIndex(questions.length);
+        } catch (e: any) {
+            console.error('Failed to generate question via AI', e?.response?.data?.error || e);
+        } finally {
+            setAiGenerating(false);
         }
     };
 
@@ -320,15 +350,34 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                     {/* Add question buttons */}
                     <div className="p-2 border-t-2 border-border space-y-1">
                         <p className="text-xs font-bold text-muted-foreground uppercase px-1">Add</p>
-                        <Button
-                            variant="outline"
-                            size="sm"
-                            className="w-full text-xs justify-start gap-1 h-7 mb-1"
-                            onClick={() => setBankPickerOpen(true)}
-                        >
-                            <Database className="h-3 w-3" />
-                            Import from Bank
-                        </Button>
+                        {/* Generate via AI */}
+                        <div className="relative mb-1">
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                className="w-full text-xs justify-start gap-1 h-7 border-primary text-primary hover:bg-primary/5"
+                                onClick={() => setAiTypePickerOpen(prev => !prev)}
+                                disabled={aiGenerating}
+                            >
+                                {aiGenerating ? <Loader2 className="h-3 w-3 animate-spin" /> : <Sparkles className="h-3 w-3" />}
+                                {aiGenerating ? 'Generating...' : 'Generate via AI'}
+                            </Button>
+                            {aiTypePickerOpen && (
+                                <div className="absolute bottom-full left-0 right-0 mb-1 bg-card border-2 border-foreground shadow-md z-10 p-1 space-y-0.5">
+                                    <p className="text-xs text-muted-foreground px-1 pb-0.5">Choose type:</p>
+                                    {(Object.keys(TYPE_LABELS).filter(t => t !== 'section_header') as QuestionType[]).map(type => (
+                                        <button
+                                            key={type}
+                                            className="flex items-center gap-2 w-full text-xs px-2 py-1 hover:bg-primary/10 rounded text-left"
+                                            onClick={() => generateViaAI(type)}
+                                        >
+                                            {TYPE_ICONS[type]}
+                                            {TYPE_LABELS[type]}
+                                        </button>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
                         <div className="grid grid-cols-2 gap-1">
                             {(Object.keys(TYPE_LABELS) as QuestionType[]).map(type => (
                                 <Button

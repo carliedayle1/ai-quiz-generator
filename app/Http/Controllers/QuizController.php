@@ -289,6 +289,33 @@ class QuizController extends Controller
         ]);
     }
 
+    public function generateSingle(Quiz $quiz, Request $request, QuizGeneratorService $service)
+    {
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'question_type' => 'required|in:multiple_choice,true_false,identification,coding,essay',
+        ]);
+
+        // Build context from existing questions
+        $existingContext = $quiz->questions()
+            ->whereNotIn('type', ['section_header'])
+            ->get()
+            ->map(fn($q) => $q->content['question'] ?? '')
+            ->filter()
+            ->values()
+            ->toArray();
+
+        try {
+            $question = $service->generateSingle($validated['question_type'], $existingContext);
+            return response()->json(['question' => $question]);
+        } catch (\Exception $e) {
+            return response()->json(['error' => $e->getMessage()], 422);
+        }
+    }
+
     public function printQuiz(Quiz $quiz, Request $request)
     {
         if ($quiz->classModel->user_id !== $request->user()->id) {

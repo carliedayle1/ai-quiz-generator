@@ -210,6 +210,79 @@ PROMPT;
         return $prompt;
     }
 
+    /**
+     * Generate exactly ONE question of a given type, avoiding overlap with existing quiz content.
+     */
+    public function generateSingle(string $type, array $existingContext): array
+    {
+        if (empty($this->apiKey)) {
+            throw new InvalidArgumentException('Groq API key is not configured. Set GROQ_API_KEY in your .env file.');
+        }
+
+        $contextSnippet = '';
+        if (!empty($existingContext)) {
+            $excerpts = array_slice($existingContext, 0, 20);
+            $contextSnippet = "\n\nExisting questions already in this quiz (do NOT duplicate these concepts):\n"
+                . implode("\n", array_map(fn($c) => '- ' . $c, $excerpts));
+        }
+
+        $typeLabels = [
+            'multiple_choice' => 'Multiple Choice',
+            'true_false' => 'True/False',
+            'identification' => 'Identification',
+            'coding' => 'Coding',
+            'essay' => 'Essay',
+        ];
+
+        $label = $typeLabels[$type] ?? $type;
+        $userPrompt = "Generate exactly ONE new {$label} question. It must be on a different concept than the existing questions listed below.{$contextSnippet}\n\nReturn a JSON object with a \"question\" key containing a single question object.";
+
+        $response = Http::withHeaders([
+            'Authorization' => 'Bearer ' . $this->apiKey,
+            'Content-Type' => 'application/json',
+        ])->timeout(30)->post($this->apiUrl, [
+            'model' => $this->model,
+            'messages' => [
+                ['role' => 'system', 'content' => self::SYSTEM_PROMPT],
+                ['role' => 'user', 'content' => $userPrompt],
+            ],
+            'temperature' => 0.7,
+            'max_tokens' => 1024,
+            'response_format' => ['type' => 'json_object'],
+        ]);
+
+        if (!$response->successful()) {
+            throw new \RuntimeException('Failed to generate question. API returned status: ' . $response->status());
+        }
+
+        $content = $response->json('choices.0.message.content', '');
+        $content = preg_replace('/^```(?:json)?\s*/m', '', $content);
+        $content = preg_replace('/\s*```$/m', '', $content);
+        $content = trim($content);
+
+        $decoded = json_decode($content, true);
+
+        if (!is_array($decoded)) {
+            throw new \RuntimeException('AI returned invalid JSON. Please try again.');
+        }
+
+        // Unwrap: could be {"question": {...}} or {"questions": [...]}
+        if (isset($decoded['question']) && is_array($decoded['question'])) {
+            $q = $decoded['question'];
+        } elseif (isset($decoded['questions']) && is_array($decoded['questions']) && !empty($decoded['questions'])) {
+            $q = $decoded['questions'][0];
+        } else {
+            // Maybe the root IS the question object
+            $q = $decoded;
+        }
+
+        if (!isset($q['type']) || !in_array($q['type'], self::VALID_TYPES) || !isset($q['question'])) {
+            throw new \RuntimeException('AI generated an invalid question structure. Please try again.');
+        }
+
+        return $q;
+    }
+
     public function generateDescription(string $title, array $typeCounts): string
     {
         if (empty($this->apiKey)) {

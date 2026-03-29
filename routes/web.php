@@ -90,6 +90,7 @@ Route::middleware('auth')->group(function () {
         Route::post('/quizzes/{quiz}/unpublish', [QuizController::class, 'unpublish'])->name('quizzes.unpublish');
         Route::post('/quizzes/{quiz}/schedule', [QuizController::class, 'schedule'])->name('quizzes.schedule');
         Route::get('/quizzes/{quiz}/print', [QuizController::class, 'printQuiz'])->name('quizzes.print');
+        Route::post('/quizzes/{quiz}/generate-single', [QuizController::class, 'generateSingle'])->name('quizzes.generate-single');
 
         // Question CRUD (order matters: reorder before {question})
         Route::post('/quizzes/{quiz}/questions/reorder', [QuizController::class, 'reorderQuestions'])->name('questions.reorder');
