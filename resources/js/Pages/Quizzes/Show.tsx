@@ -5,7 +5,7 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Link } from '@inertiajs/react';
-import { CheckCircle, CheckSquare, Code, Edit2, Eye, EyeOff, FileText, HelpCircle, ToggleLeft } from 'lucide-react';
+import { CheckCircle, CheckSquare, Code, Download, Edit2, Eye, EyeOff, FileText, HelpCircle, ToggleLeft } from 'lucide-react';
 
 export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeacher: boolean }>) {
     const togglePublish = () => {
@@ -43,6 +43,13 @@ export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeac
                                     <Edit2 className="mr-2 h-4 w-4" /> Edit
                                 </Button>
                             </Link>
+                            {quiz.submissions && quiz.submissions.length > 0 && (
+                                <a href={route('analytics.export-gradebook', quiz.id)}>
+                                    <Button variant="outline">
+                                        <Download className="mr-2 h-4 w-4" /> Export
+                                    </Button>
+                                </a>
+                            )}
                             <Button variant="outline" onClick={togglePublish}>
                                 {quiz.is_published ? (
                                     <>

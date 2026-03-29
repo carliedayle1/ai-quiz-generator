@@ -5,6 +5,7 @@ import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 import {
+    BarChart3,
     Database,
     LayoutDashboard,
     GraduationCap,
@@ -72,14 +73,24 @@ export default function Authenticated({
                         Classes
                     </SidebarNavLink>
                     {user.role === 'teacher' && (
-                        <SidebarNavLink
-                            href={route('question-bank.index')}
-                            active={route().current('question-bank.*')}
-                            icon={Database}
-                            collapsed={collapsed}
-                        >
-                            Question Bank
-                        </SidebarNavLink>
+                        <>
+                            <SidebarNavLink
+                                href={route('question-bank.index')}
+                                active={route().current('question-bank.*')}
+                                icon={Database}
+                                collapsed={collapsed}
+                            >
+                                Question Bank
+                            </SidebarNavLink>
+                            <SidebarNavLink
+                                href={route('analytics.index')}
+                                active={route().current('analytics.*')}
+                                icon={BarChart3}
+                                collapsed={collapsed}
+                            >
+                                Analytics
+                            </SidebarNavLink>
+                        </>
                     )}
                 </>
             )}

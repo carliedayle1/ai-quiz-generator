@@ -5,7 +5,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
 import { Input } from '@/Components/ui/input';
-import { AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { AlertTriangle, CheckCircle, Printer, XCircle } from 'lucide-react';
+import { antiCheatLabel } from '@/lib/antiCheatLabels';
 import { useState } from 'react';
 import axios from 'axios';
 
@@ -62,6 +63,11 @@ export default function Result({ submission: initialSubmission }: PageProps<{ su
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">{quiz.title}</p>
                     </div>
+                    <a href={route('submissions.print', submission.id)} target="_blank" rel="noopener noreferrer">
+                        <Button variant="outline" size="sm">
+                            <Printer className="mr-2 h-4 w-4" /> Print
+                        </Button>
+                    </a>
                     <div className="text-right">
                         {submission.earned_points !== null && submission.total_points !== null && (
                             <div className="text-3xl font-bold text-foreground">
@@ -92,7 +98,7 @@ export default function Result({ submission: initialSubmission }: PageProps<{ su
                                 <div className="space-y-2">
                                     {submission.exam_logs.map((log) => (
                                         <div key={log.id} className="flex items-center justify-between text-sm">
-                                            <span className="text-foreground">{log.event_type}</span>
+                                            <span className="text-foreground">{antiCheatLabel(log.event_type)}</span>
                                             <span className="text-muted-foreground">
                                                 {new Date(log.created_at).toLocaleTimeString()}
                                             </span>

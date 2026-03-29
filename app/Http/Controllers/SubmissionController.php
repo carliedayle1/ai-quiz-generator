@@ -144,6 +144,28 @@ class SubmissionController extends Controller
     }
 
     /**
+     * Print-friendly Blade view of a submission result.
+     */
+    public function printResult(Submission $submission, Request $request)
+    {
+        $user = $request->user();
+        $quiz = $submission->quiz()->with('questions')->first();
+
+        // Only the student themselves or the teacher who owns the quiz can print
+        if ($submission->user_id !== $user->id && $quiz->classModel->user_id !== $user->id) {
+            abort(403);
+        }
+
+        $submission->load(['student', 'examLogs']);
+        $quiz->load('questions');
+
+        return view('print.result', [
+            'submission' => $submission,
+            'quiz' => $quiz,
+        ]);
+    }
+
+    /**
      * Teacher manually grades a question (essay / coding) with optional partial credit.
      */
     public function gradeQuestion(Submission $submission, Request $request)

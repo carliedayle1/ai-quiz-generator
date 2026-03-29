@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AdminController;
+use App\Http\Controllers\AnalyticsController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ExamLogController;
 use App\Http\Controllers\NotificationController;
@@ -103,6 +104,13 @@ Route::middleware('auth')->group(function () {
 
         // Anti-cheat logs
         Route::post('/submissions/{submission}/logs', [ExamLogController::class, 'store'])->name('exam-logs.store');
+
+        // Analytics (teachers only)
+        Route::get('/analytics', [AnalyticsController::class, 'index'])->name('analytics.index');
+        Route::get('/quizzes/{quiz}/export-gradebook', [AnalyticsController::class, 'exportGradebook'])->name('analytics.export-gradebook');
+
+        // PDF print (submit existing result)
+        Route::get('/submissions/{submission}/print', [SubmissionController::class, 'printResult'])->name('submissions.print');
 
         // Question Bank (teachers only, but middleware handles that via role check in controller)
         Route::get('/question-bank', [QuestionBankController::class, 'index'])->name('question-bank.index');
