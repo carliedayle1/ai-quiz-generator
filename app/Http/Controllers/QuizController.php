@@ -6,6 +6,7 @@ use App\Models\ClassModel;
 use App\Models\Question;
 use App\Models\Quiz;
 use App\Services\FileTextExtractor;
+use App\Services\QuizCloningService;
 use App\Services\QuizGeneratorService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -314,6 +315,22 @@ class QuizController extends Controller
         } catch (\Exception $e) {
             return response()->json(['error' => $e->getMessage()], 422);
         }
+    }
+
+    public function clone(Quiz $quiz, Request $request, QuizCloningService $cloningService)
+    {
+        if (!$request->user()->isTeacher()) {
+            abort(403);
+        }
+
+        // Only allow cloning public quizzes (or own quizzes)
+        if (!$quiz->is_public && $quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $newQuiz = $cloningService->clone($quiz, $request->user());
+
+        return redirect()->route('quizzes.edit', $newQuiz->id);
     }
 
     public function printQuiz(Quiz $quiz, Request $request)
