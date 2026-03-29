@@ -70,14 +70,17 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
         router.reload({ only: ['unread_notifications'] });
     };
 
-    const handleShareAction = async (notification: AppNotification, action: 'accept' | 'decline') => {
+    const handleShareAction = (notification: AppNotification, action: 'accept' | 'decline') => {
         const shareId = notification.data?.share_id;
         if (!shareId) return;
         const routeName = action === 'accept' ? 'shares.accept' : 'shares.decline';
-        await axios.post(route(routeName, shareId));
-        // Re-fetch to reflect updated state
-        fetchNotifications();
-        router.reload({ only: ['unread_notifications'] });
+        setOpen(false);
+        router.post(route(routeName, shareId), {}, {
+            onError: (errors) => {
+                console.error('Share action failed', errors);
+                alert('Something went wrong. Please try again.');
+            },
+        });
     };
 
     const ICONS: Record<string, React.ReactNode> = {
