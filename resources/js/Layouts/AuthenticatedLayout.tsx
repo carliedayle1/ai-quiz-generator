@@ -51,22 +51,26 @@ export default function Authenticated({
 
     const navLinks = (
         <>
-            <SidebarNavLink
-                href={route('dashboard')}
-                active={route().current('dashboard')}
-                icon={LayoutDashboard}
-                collapsed={collapsed}
-            >
-                Dashboard
-            </SidebarNavLink>
-            <SidebarNavLink
-                href={route('classes.index')}
-                active={route().current('classes.*') || route().current('quizzes.*')}
-                icon={GraduationCap}
-                collapsed={collapsed}
-            >
-                Classes
-            </SidebarNavLink>
+            {user.role !== 'admin' && (
+                <>
+                    <SidebarNavLink
+                        href={route('dashboard')}
+                        active={route().current('dashboard')}
+                        icon={LayoutDashboard}
+                        collapsed={collapsed}
+                    >
+                        Dashboard
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('classes.index')}
+                        active={route().current('classes.*') || route().current('quizzes.*')}
+                        icon={GraduationCap}
+                        collapsed={collapsed}
+                    >
+                        Classes
+                    </SidebarNavLink>
+                </>
+            )}
             {user.role === 'admin' && (
                 <>
                     <SidebarNavLink
@@ -100,22 +104,26 @@ export default function Authenticated({
 
     const mobileNavLinks = (
         <>
-            <SidebarNavLink
-                href={route('dashboard')}
-                active={route().current('dashboard')}
-                icon={LayoutDashboard}
-                collapsed={false}
-            >
-                Dashboard
-            </SidebarNavLink>
-            <SidebarNavLink
-                href={route('classes.index')}
-                active={route().current('classes.*') || route().current('quizzes.*')}
-                icon={GraduationCap}
-                collapsed={false}
-            >
-                Classes
-            </SidebarNavLink>
+            {user.role !== 'admin' && (
+                <>
+                    <SidebarNavLink
+                        href={route('dashboard')}
+                        active={route().current('dashboard')}
+                        icon={LayoutDashboard}
+                        collapsed={false}
+                    >
+                        Dashboard
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('classes.index')}
+                        active={route().current('classes.*') || route().current('quizzes.*')}
+                        icon={GraduationCap}
+                        collapsed={false}
+                    >
+                        Classes
+                    </SidebarNavLink>
+                </>
+            )}
             {user.role === 'admin' && (
                 <>
                     <SidebarNavLink
@@ -205,7 +213,7 @@ export default function Authenticated({
                     icon={User}
                     collapsed={collapsed}
                 >
-                    {user.name}
+                    {user.first_name} {user.last_name}
                 </SidebarNavLink>
 
                 <SidebarNavLink
@@ -287,7 +295,7 @@ export default function Authenticated({
                                 icon={User}
                                 collapsed={false}
                             >
-                                {user.name}
+                                {user.first_name} {user.last_name}
                             </SidebarNavLink>
                             <SidebarNavLink
                                 href={route('logout')}

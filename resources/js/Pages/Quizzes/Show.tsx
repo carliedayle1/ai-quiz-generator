@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { PageProps, Question, Quiz } from '@/types';
+import { PageProps, Question, Quiz, fullName } from '@/types';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -180,7 +180,7 @@ export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeac
                                             >
                                                 <div>
                                                     <p className="text-sm font-medium text-foreground">
-                                                        {sub.student?.name}
+                                                        {sub.student ? fullName(sub.student) : 'Unknown'}
                                                     </p>
                                                     <p className="text-sm text-muted-foreground">
                                                         {sub.student?.email}

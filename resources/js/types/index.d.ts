@@ -1,11 +1,17 @@
 export interface User {
     id: number;
-    name: string;
+    first_name: string;
+    last_name: string;
+    id_number: string;
     email: string;
     email_verified_at?: string;
     role: 'teacher' | 'student' | 'admin';
     created_at?: string;
     updated_at?: string;
+}
+
+export function fullName(user: Pick<User, 'first_name' | 'last_name'>): string {
+    return `${user.first_name} ${user.last_name}`;
 }
 
 export interface ClassModel {
@@ -30,6 +36,10 @@ export interface Quiz {
     description: string | null;
     time_limit: number | null;
     is_published: boolean;
+    available_from: string | null;
+    available_until: string | null;
+    due_date: string | null;
+    status: 'draft' | 'published' | 'scheduled' | 'closed';
     created_at: string;
     updated_at: string;
     classModel?: ClassModel;

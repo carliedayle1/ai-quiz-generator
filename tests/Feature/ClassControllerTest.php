@@ -196,7 +196,7 @@ class ClassControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Midterm Exam',
-            'is_published' => true,
+            'status' => 'published',
         ]);
 
         Question::create([

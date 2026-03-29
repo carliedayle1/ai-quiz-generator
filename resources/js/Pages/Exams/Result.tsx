@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, usePage } from '@inertiajs/react';
-import { PageProps, Submission } from '@/types';
+import { PageProps, Submission, fullName } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { CheckCircle, XCircle, AlertTriangle } from 'lucide-react';
@@ -18,7 +18,7 @@ export default function Result({ submission }: PageProps<{ submission: Submissio
                 <div className="flex items-center justify-between">
                     <div>
                         <h2 className="text-xl font-bold leading-tight text-foreground">
-                            {isTeacher ? `${submission.student?.name}'s Submission` : 'Your Results'}
+                            {isTeacher ? `${submission.student ? fullName(submission.student) : 'Unknown'}'s Submission` : 'Your Results'}
                         </h2>
                         <p className="text-sm text-muted-foreground mt-1">{quiz.title}</p>
                     </div>

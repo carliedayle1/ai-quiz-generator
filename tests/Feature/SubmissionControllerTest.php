@@ -30,7 +30,7 @@ class SubmissionControllerTest extends TestCase
         return Quiz::create(array_merge([
             'class_id' => $class->id,
             'title' => 'Test Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ], $overrides));
     }
 
@@ -99,7 +99,7 @@ class SubmissionControllerTest extends TestCase
     public function test_student_cannot_take_unpublished_quiz(): void
     {
         [$teacher, $class] = $this->createTeacherClass();
-        $quiz = $this->createPublishedQuiz($class, ['is_published' => false]);
+        $quiz = $this->createPublishedQuiz($class, ['status' => 'draft']);
         $student = $this->createEnrolledStudent($class);
 
         $response = $this->actingAs($student)->get(route('quizzes.take', $quiz));

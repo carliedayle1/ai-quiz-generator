@@ -94,6 +94,7 @@ class QuizController extends Controller
             'title' => $validated['title'],
             'description' => $description,
             'time_limit' => $validated['time_limit'] ?? null,
+            'status' => 'draft',
         ]);
 
         foreach ($validated['questions'] as $index => $q) {
@@ -129,7 +130,7 @@ class QuizController extends Controller
             abort(403);
         }
 
-        $quiz->update(['is_published' => true]);
+        $quiz->update(['status' => 'published']);
 
         return back();
     }
@@ -140,7 +141,7 @@ class QuizController extends Controller
             abort(403);
         }
 
-        $quiz->update(['is_published' => false]);
+        $quiz->update(['status' => 'draft']);
 
         return back();
     }

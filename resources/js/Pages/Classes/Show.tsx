@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, Link, router, usePage } from '@inertiajs/react';
-import { ClassModel, PageProps } from '@/types';
+import { ClassModel, PageProps, fullName } from '@/types';
 import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -134,7 +134,7 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                                             {classData.students.map((student) => (
                                                 <div key={student.id} className="flex items-center justify-between px-6 py-3">
                                                     <div>
-                                                        <p className="text-sm font-medium text-foreground">{student.name}</p>
+                                                        <p className="text-sm font-medium text-foreground">{fullName(student)}</p>
                                                         <p className="text-sm text-muted-foreground">{student.email}</p>
                                                     </div>
                                                 </div>

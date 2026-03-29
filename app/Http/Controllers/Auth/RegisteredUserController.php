@@ -41,7 +41,9 @@ class RegisteredUserController extends Controller
     public function store(Request $request): RedirectResponse
     {
         $request->validate([
-            'name' => 'required|string|max:255',
+            'first_name' => 'required|string|max:100',
+            'last_name' => 'required|string|max:100',
+            'id_number' => 'required|string|max:50|unique:users,id_number',
             'email' => 'required|string|lowercase|email|max:255|unique:'.User::class,
             'password' => ['required', 'confirmed', Rules\Password::defaults()],
             'token' => 'required|string|size:64',
@@ -59,7 +61,9 @@ class RegisteredUserController extends Controller
         }
 
         $user = User::create([
-            'name' => $request->name,
+            'first_name' => $request->first_name,
+            'last_name' => $request->last_name,
+            'id_number' => $request->id_number,
             'email' => $request->email,
             'password' => Hash::make($request->password),
             'role' => $invitation->role,

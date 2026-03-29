@@ -1,6 +1,6 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
 import { Head, router } from '@inertiajs/react';
-import { PageProps, User } from '@/types';
+import { PageProps, User, fullName } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Button } from '@/Components/ui/button';
@@ -78,7 +78,7 @@ export default function Users({ users }: PageProps<{ users: PaginatedUsers }>) {
                                     <tbody>
                                         {users.data.map((user) => (
                                             <tr key={user.id} className="border-b border-border">
-                                                <td className="py-3 px-4 font-medium">{user.name}</td>
+                                                <td className="py-3 px-4 font-medium">{fullName(user)}</td>
                                                 <td className="py-3 px-4 text-muted-foreground">{user.email}</td>
                                                 <td className="py-3 px-4">
                                                     <Badge variant={roleBadgeVariant(user.role)}>
@@ -129,7 +129,7 @@ export default function Users({ users }: PageProps<{ users: PaginatedUsers }>) {
                     <DialogHeader>
                         <DialogTitle>Delete User</DialogTitle>
                         <DialogDescription>
-                            Are you sure you want to delete <strong>{deleteTarget?.name}</strong>? This action cannot be undone.
+                            Are you sure you want to delete <strong>{deleteTarget ? fullName(deleteTarget) : ''}</strong>? This action cannot be undone.
                         </DialogDescription>
                     </DialogHeader>
                     <DialogFooter>

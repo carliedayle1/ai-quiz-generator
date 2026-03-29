@@ -102,7 +102,7 @@ class AuthTest extends TestCase
         ]);
 
         $response = $this->post(route('register'), [
-            'name' => 'New Teacher',
+            'first_name' => 'New', 'last_name' => 'Teacher', 'id_number' => 'USR000001',
             'email' => 'newteacher@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -125,7 +125,7 @@ class AuthTest extends TestCase
         ]);
 
         $this->post(route('register'), [
-            'name' => 'New Student',
+            'first_name' => 'New', 'last_name' => 'Student', 'id_number' => 'USR000002',
             'email' => 'newstudent@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -150,7 +150,7 @@ class AuthTest extends TestCase
         ]);
 
         $response = $this->post(route('register'), [
-            'name' => 'Wrong Email',
+            'first_name' => 'Wrong', 'last_name' => 'Email', 'id_number' => 'USR000003',
             'email' => 'wrong@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -175,7 +175,7 @@ class AuthTest extends TestCase
         $this->assertNull($invitation->accepted_at);
 
         $this->post(route('register'), [
-            'name' => 'New User',
+            'first_name' => 'New', 'last_name' => 'User', 'id_number' => 'USR000004',
             'email' => 'user@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -193,7 +193,7 @@ class AuthTest extends TestCase
     public function test_registration_with_missing_token_is_rejected(): void
     {
         $response = $this->post(route('register'), [
-            'name' => 'No Token',
+            'first_name' => 'No', 'last_name' => 'Token', 'id_number' => 'USR000005',
             'email' => 'notoken@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -211,7 +211,7 @@ class AuthTest extends TestCase
 
         // firstOrFail on an expired token 404s
         $response = $this->post(route('register'), [
-            'name' => 'Expired Token',
+            'first_name' => 'Expired', 'last_name' => 'Token', 'id_number' => 'USR000006',
             'email' => 'expired@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',
@@ -306,7 +306,7 @@ class AuthTest extends TestCase
         ]);
 
         $this->post(route('register'), [
-            'name' => 'Auto Login User',
+            'first_name' => 'Auto', 'last_name' => 'Login', 'id_number' => 'USR000007',
             'email' => 'autologin@example.com',
             'password' => 'password123!',
             'password_confirmation' => 'password123!',

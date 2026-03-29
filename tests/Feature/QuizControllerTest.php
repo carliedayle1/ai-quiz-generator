@@ -142,7 +142,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Draft Quiz',
-            'is_published' => false,
+            'status' => 'draft',
         ]);
 
         $response = $this->actingAs($teacher)->post(route('quizzes.publish', $quiz));
@@ -150,7 +150,7 @@ class QuizControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('quizzes', [
             'id' => $quiz->id,
-            'is_published' => true,
+            'status' => 'published',
         ]);
     }
 
@@ -161,7 +161,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Published Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ]);
 
         $response = $this->actingAs($teacher)->post(route('quizzes.unpublish', $quiz));
@@ -169,7 +169,7 @@ class QuizControllerTest extends TestCase
         $response->assertRedirect();
         $this->assertDatabaseHas('quizzes', [
             'id' => $quiz->id,
-            'is_published' => false,
+            'status' => 'draft',
         ]);
     }
 
@@ -190,7 +190,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Restricted Quiz',
-            'is_published' => false,
+            'status' => 'draft',
         ]);
 
         $response = $this->actingAs($other)->post(route('quizzes.publish', $quiz));
@@ -198,7 +198,7 @@ class QuizControllerTest extends TestCase
         $response->assertForbidden();
         $this->assertDatabaseHas('quizzes', [
             'id' => $quiz->id,
-            'is_published' => false,
+            'status' => 'draft',
         ]);
     }
 
@@ -215,7 +215,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Published Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ]);
 
         $response = $this->actingAs($other)->post(route('quizzes.unpublish', $quiz));
@@ -234,7 +234,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Show Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ]);
 
         Question::create([
@@ -275,7 +275,7 @@ class QuizControllerTest extends TestCase
         $quiz = Quiz::create([
             'class_id' => $class->id,
             'title' => 'Restricted Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ]);
 
         $response = $this->actingAs($other)->get(route('quizzes.show', $quiz));

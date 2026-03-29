@@ -33,7 +33,7 @@ class AntiCheatTest extends TestCase
         return Quiz::create([
             'class_id' => $class->id,
             'title' => 'Anti-Cheat Quiz',
-            'is_published' => true,
+            'status' => 'published',
         ]);
     }
 

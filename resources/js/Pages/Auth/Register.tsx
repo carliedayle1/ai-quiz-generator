@@ -15,7 +15,9 @@ interface InvitationData {
 
 export default function Register({ invitation }: { invitation?: InvitationData }) {
     const { data, setData, post, processing, errors, reset } = useForm({
-        name: '',
+        first_name: '',
+        last_name: '',
+        id_number: '',
         email: invitation?.email || '',
         password: '',
         password_confirmation: '',
@@ -67,21 +69,48 @@ export default function Register({ invitation }: { invitation?: InvitationData }
             </div>
 
             <form onSubmit={submit}>
-                <div>
-                    <InputLabel htmlFor="name" value="Name" />
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <InputLabel htmlFor="first_name" value="First Name" />
+                        <TextInput
+                            id="first_name"
+                            name="first_name"
+                            value={data.first_name}
+                            className="mt-1 block w-full"
+                            autoComplete="given-name"
+                            isFocused={true}
+                            onChange={(e) => setData('first_name', e.target.value)}
+                            required
+                        />
+                        <InputError message={errors.first_name} className="mt-2" />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="last_name" value="Last Name" />
+                        <TextInput
+                            id="last_name"
+                            name="last_name"
+                            value={data.last_name}
+                            className="mt-1 block w-full"
+                            autoComplete="family-name"
+                            onChange={(e) => setData('last_name', e.target.value)}
+                            required
+                        />
+                        <InputError message={errors.last_name} className="mt-2" />
+                    </div>
+                </div>
 
+                <div className="mt-4">
+                    <InputLabel htmlFor="id_number" value="ID Number" />
                     <TextInput
-                        id="name"
-                        name="name"
-                        value={data.name}
+                        id="id_number"
+                        name="id_number"
+                        value={data.id_number}
                         className="mt-1 block w-full"
-                        autoComplete="name"
-                        isFocused={true}
-                        onChange={(e) => setData('name', e.target.value)}
+                        autoComplete="off"
+                        onChange={(e) => setData('id_number', e.target.value)}
                         required
                     />
-
-                    <InputError message={errors.name} className="mt-2" />
+                    <InputError message={errors.id_number} className="mt-2" />
                 </div>
 
                 <div className="mt-4">

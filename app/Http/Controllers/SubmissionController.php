@@ -17,7 +17,7 @@ class SubmissionController extends Controller
             abort(403);
         }
 
-        if (!$quiz->is_published) {
+        if (!$quiz->isAvailable()) {
             abort(404);
         }
 

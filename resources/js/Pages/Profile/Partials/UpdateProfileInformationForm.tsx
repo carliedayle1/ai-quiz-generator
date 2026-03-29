@@ -19,7 +19,9 @@ export default function UpdateProfileInformation({
 
     const { data, setData, patch, errors, processing, recentlySuccessful } =
         useForm({
-            name: user.name,
+            first_name: user.first_name,
+            last_name: user.last_name,
+            id_number: user.id_number,
             email: user.email,
         });
 
@@ -42,20 +44,45 @@ export default function UpdateProfileInformation({
             </header>
 
             <form onSubmit={submit} className="mt-6 space-y-6">
+                <div className="grid grid-cols-2 gap-4">
+                    <div>
+                        <InputLabel htmlFor="first_name" value="First Name" />
+                        <TextInput
+                            id="first_name"
+                            className="mt-1 block w-full"
+                            value={data.first_name}
+                            onChange={(e) => setData('first_name', e.target.value)}
+                            required
+                            isFocused
+                            autoComplete="given-name"
+                        />
+                        <InputError className="mt-2" message={errors.first_name} />
+                    </div>
+                    <div>
+                        <InputLabel htmlFor="last_name" value="Last Name" />
+                        <TextInput
+                            id="last_name"
+                            className="mt-1 block w-full"
+                            value={data.last_name}
+                            onChange={(e) => setData('last_name', e.target.value)}
+                            required
+                            autoComplete="family-name"
+                        />
+                        <InputError className="mt-2" message={errors.last_name} />
+                    </div>
+                </div>
+
                 <div>
-                    <InputLabel htmlFor="name" value="Name" />
-
+                    <InputLabel htmlFor="id_number" value="ID Number" />
                     <TextInput
-                        id="name"
+                        id="id_number"
                         className="mt-1 block w-full"
-                        value={data.name}
-                        onChange={(e) => setData('name', e.target.value)}
+                        value={data.id_number}
+                        onChange={(e) => setData('id_number', e.target.value)}
                         required
-                        isFocused
-                        autoComplete="name"
+                        autoComplete="off"
                     />
-
-                    <InputError className="mt-2" message={errors.name} />
+                    <InputError className="mt-2" message={errors.id_number} />
                 </div>
 
                 <div>

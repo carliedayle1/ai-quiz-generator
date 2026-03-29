@@ -36,28 +36,31 @@ Route::middleware('auth')->group(function () {
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
 
-    // Classes
-    Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
-    Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
-    Route::get('/classes/{class}', [ClassController::class, 'show'])->name('classes.show');
-    Route::delete('/classes/{class}', [ClassController::class, 'destroy'])->name('classes.destroy');
-    Route::post('/classes/join', [ClassController::class, 'join'])->name('classes.join');
+    // Classes, Quizzes, Exams — not accessible to admins
+    Route::middleware('not_admin')->group(function () {
+        // Classes
+        Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
+        Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
+        Route::get('/classes/{class}', [ClassController::class, 'show'])->name('classes.show');
+        Route::delete('/classes/{class}', [ClassController::class, 'destroy'])->name('classes.destroy');
+        Route::post('/classes/join', [ClassController::class, 'join'])->name('classes.join');
 
-    // Quizzes
-    Route::get('/classes/{class}/quizzes/create', [QuizController::class, 'create'])->name('quizzes.create');
-    Route::post('/classes/{class}/quizzes/generate', [QuizController::class, 'generate'])->name('quizzes.generate');
-    Route::post('/classes/{class}/quizzes', [QuizController::class, 'store'])->name('quizzes.store');
-    Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
-    Route::post('/quizzes/{quiz}/publish', [QuizController::class, 'publish'])->name('quizzes.publish');
-    Route::post('/quizzes/{quiz}/unpublish', [QuizController::class, 'unpublish'])->name('quizzes.unpublish');
+        // Quizzes
+        Route::get('/classes/{class}/quizzes/create', [QuizController::class, 'create'])->name('quizzes.create');
+        Route::post('/classes/{class}/quizzes/generate', [QuizController::class, 'generate'])->name('quizzes.generate');
+        Route::post('/classes/{class}/quizzes', [QuizController::class, 'store'])->name('quizzes.store');
+        Route::get('/quizzes/{quiz}', [QuizController::class, 'show'])->name('quizzes.show');
+        Route::post('/quizzes/{quiz}/publish', [QuizController::class, 'publish'])->name('quizzes.publish');
+        Route::post('/quizzes/{quiz}/unpublish', [QuizController::class, 'unpublish'])->name('quizzes.unpublish');
 
-    // Exam taking
-    Route::get('/quizzes/{quiz}/take', [SubmissionController::class, 'take'])->name('quizzes.take');
-    Route::post('/quizzes/{quiz}/submit', [SubmissionController::class, 'submit'])->name('quizzes.submit');
-    Route::get('/submissions/{submission}/result', [SubmissionController::class, 'result'])->name('submissions.result');
+        // Exam taking
+        Route::get('/quizzes/{quiz}/take', [SubmissionController::class, 'take'])->name('quizzes.take');
+        Route::post('/quizzes/{quiz}/submit', [SubmissionController::class, 'submit'])->name('quizzes.submit');
+        Route::get('/submissions/{submission}/result', [SubmissionController::class, 'result'])->name('submissions.result');
 
-    // Anti-cheat logs
-    Route::post('/submissions/{submission}/logs', [ExamLogController::class, 'store'])->name('exam-logs.store');
+        // Anti-cheat logs
+        Route::post('/submissions/{submission}/logs', [ExamLogController::class, 'store'])->name('exam-logs.store');
+    });
 
     // Admin routes
     Route::middleware('admin')->prefix('admin')->name('admin.')->group(function () {
