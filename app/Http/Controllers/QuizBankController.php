@@ -36,6 +36,21 @@ class QuizBankController extends Controller
         ]);
     }
 
+    public function preview(Quiz $quiz, Request $request)
+    {
+        if (!$request->user()->isTeacher()) {
+            abort(403);
+        }
+
+        if (!$quiz->is_public) {
+            abort(404);
+        }
+
+        $quiz->load(['questions' => fn($q) => $q->orderBy('order'), 'classModel:id,name']);
+
+        return response()->json(['quiz' => $quiz]);
+    }
+
     public function togglePublic(Quiz $quiz, Request $request)
     {
         $ownerId = $quiz->class_id !== null ? $quiz->classModel?->user_id : $quiz->user_id;

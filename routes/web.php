@@ -103,6 +103,7 @@ Route::middleware('auth')->group(function () {
 
         // Global Quiz Bank
         Route::get('/quiz-bank', [QuizBankController::class, 'index'])->name('quiz-bank.index');
+        Route::get('/quiz-bank/{quiz}/preview', [QuizBankController::class, 'preview'])->name('quiz-bank.preview');
 
         // Question CRUD (order matters: reorder before {question})
         Route::post('/quizzes/{quiz}/questions/reorder', [QuizController::class, 'reorderQuestions'])->name('questions.reorder');
