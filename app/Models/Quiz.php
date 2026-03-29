@@ -12,7 +12,7 @@ class Quiz extends Model
     use HasFactory;
 
     protected $fillable = [
-        'class_id', 'title', 'description', 'time_limit', 'is_published',
+        'class_id', 'user_id', 'title', 'description', 'time_limit', 'is_published',
         'available_from', 'available_until', 'due_date', 'status', 'allow_partial_credit',
         'is_public',
     ];

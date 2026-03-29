@@ -15,6 +15,7 @@ class QuizCloningService
     {
         $newQuiz = Quiz::create([
             'class_id' => $classId,
+            'user_id' => $classId === null ? $newOwner->id : null,
             'title' => $source->title . ' (Copy)',
             'description' => $source->description,
             'time_limit' => $source->time_limit,

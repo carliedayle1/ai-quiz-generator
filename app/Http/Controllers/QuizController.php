@@ -134,11 +134,28 @@ class QuizController extends Controller
         return redirect()->route('quizzes.edit', $quiz);
     }
 
-    public function edit(Quiz $quiz, Request $request)
+    /**
+     * Resolve the owner ID of a quiz regardless of whether it has a class.
+     * Quizzes cloned without a class store their owner directly in user_id.
+     */
+    private function quizOwnerId(Quiz $quiz): ?int
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
+        if ($quiz->class_id !== null) {
+            return $quiz->classModel?->user_id;
+        }
+        return $quiz->user_id;
+    }
+
+    private function authorizeOwner(Quiz $quiz, Request $request): void
+    {
+        if ($this->quizOwnerId($quiz) !== $request->user()->id) {
             abort(403);
         }
+    }
+
+    public function edit(Quiz $quiz, Request $request)
+    {
+        $this->authorizeOwner($quiz, $request);
 
         $quiz->load(['questions', 'classModel']);
 
@@ -156,9 +173,7 @@ class QuizController extends Controller
 
     public function update(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -173,21 +188,19 @@ class QuizController extends Controller
 
     public function destroy(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $classId = $quiz->class_id;
         $quiz->delete();
 
-        return redirect()->route('classes.show', $classId);
+        return $classId
+            ? redirect()->route('classes.show', $classId)
+            : redirect()->route('classes.index');
     }
 
     public function schedule(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $validated = $request->validate([
             'available_from' => 'nullable|date',
@@ -207,9 +220,7 @@ class QuizController extends Controller
 
     public function storeQuestion(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $validated = $request->validate([
             'type' => 'required|in:multiple_choice,true_false,identification,coding,essay,section_header',
@@ -231,7 +242,7 @@ class QuizController extends Controller
 
     public function updateQuestion(Quiz $quiz, Question $question, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id || $question->quiz_id !== $quiz->id) {
+        if ($this->quizOwnerId($quiz) !== $request->user()->id || $question->quiz_id !== $quiz->id) {
             abort(403);
         }
 
@@ -248,7 +259,7 @@ class QuizController extends Controller
 
     public function destroyQuestion(Quiz $quiz, Question $question, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id || $question->quiz_id !== $quiz->id) {
+        if ($this->quizOwnerId($quiz) !== $request->user()->id || $question->quiz_id !== $quiz->id) {
             abort(403);
         }
 
@@ -265,9 +276,7 @@ class QuizController extends Controller
 
     public function reorderQuestions(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $validated = $request->validate([
             'questions' => 'required|array',
@@ -287,7 +296,7 @@ class QuizController extends Controller
         $user = $request->user();
         $quiz->load(['questions', 'classModel', 'submissions.student']);
 
-        if ($user->isTeacher() && $quiz->classModel->user_id !== $user->id) {
+        if ($user->isTeacher() && $this->quizOwnerId($quiz) !== $user->id) {
             abort(403);
         }
 
@@ -309,9 +318,7 @@ class QuizController extends Controller
 
     public function generateSingle(Quiz $quiz, Request $request, QuizGeneratorService $service)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $validated = $request->validate([
             'question_type' => 'required|in:multiple_choice,true_false,identification,coding,essay',
@@ -341,7 +348,7 @@ class QuizController extends Controller
         }
 
         // Only allow cloning public quizzes (or own quizzes)
-        if (!$quiz->is_public && $quiz->classModel->user_id !== $request->user()->id) {
+        if (!$quiz->is_public && $this->quizOwnerId($quiz) !== $request->user()->id) {
             abort(403);
         }
 
@@ -352,9 +359,7 @@ class QuizController extends Controller
 
     public function printQuiz(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $quiz->load(['questions' => fn($q) => $q->orderBy('order'), 'classModel']);
 
@@ -366,9 +371,7 @@ class QuizController extends Controller
 
     public function publish(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $quiz->update(['status' => 'published']);
 
@@ -377,9 +380,7 @@ class QuizController extends Controller
 
     public function unpublish(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
-            abort(403);
-        }
+        $this->authorizeOwner($quiz, $request);
 
         $quiz->update(['status' => 'draft']);
 
