@@ -5,9 +5,14 @@ import { Button } from '@/Components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
 import { Link } from '@inertiajs/react';
-import { CheckCircle, CheckSquare, Code, Download, Edit2, Eye, EyeOff, FileText, HelpCircle, Printer, ToggleLeft } from 'lucide-react';
+import { CheckCircle, CheckSquare, Code, Download, Edit2, Eye, EyeOff, FileText, HelpCircle, Printer, Share2, ToggleLeft } from 'lucide-react';
+import ShareQuizDialog from '@/Components/ShareQuizDialog';
+import { useState } from 'react';
 
-export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeacher: boolean }>) {
+interface Teacher { id: number; first_name: string; last_name: string; email: string; }
+
+export default function Show({ quiz, isTeacher, teachers = [] }: PageProps<{ quiz: Quiz; isTeacher: boolean; teachers: Teacher[] }>) {
+    const [shareOpen, setShareOpen] = useState(false);
     const togglePublish = () => {
         if (quiz.is_published) {
             router.post(route('quizzes.unpublish', quiz.id));
@@ -48,6 +53,11 @@ export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeac
                                     <Printer className="mr-2 h-4 w-4" /> Print
                                 </Button>
                             </Link>
+                            {teachers.length > 0 && (
+                                <Button variant="outline" onClick={() => setShareOpen(true)}>
+                                    <Share2 className="mr-2 h-4 w-4" /> Share
+                                </Button>
+                            )}
                             {quiz.submissions && quiz.submissions.length > 0 && (
                                 <a href={route('analytics.export-gradebook', quiz.id)}>
                                     <Button variant="outline">
@@ -224,6 +234,12 @@ export default function Show({ quiz, isTeacher }: PageProps<{ quiz: Quiz; isTeac
                     )}
                 </div>
             </div>
+            <ShareQuizDialog
+                quizId={quiz.id}
+                teachers={teachers}
+                open={shareOpen}
+                onClose={() => setShareOpen(false)}
+            />
         </AuthenticatedLayout>
     );
 }

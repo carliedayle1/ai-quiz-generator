@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\AppNotification;
+use App\Models\QuizShare;
 use App\Models\User;
 
 class NotificationService
@@ -32,6 +33,24 @@ class NotificationService
             'data' => [
                 'quiz_id' => $quiz->id,
                 'quiz_title' => $quiz->title,
+            ],
+        ]);
+    }
+
+    public function notifyQuizShared(QuizShare $share): AppNotification
+    {
+        $senderName = $share->sender->first_name . ' ' . $share->sender->last_name;
+        $quizTitle = $share->quiz->title;
+
+        return AppNotification::create([
+            'user_id' => $share->recipient_id,
+            'type' => 'quiz_shared',
+            'title' => 'Quiz Shared With You',
+            'body' => "Teacher {$senderName} shared "{$quizTitle}" with you.",
+            'data' => [
+                'share_id' => $share->id,
+                'quiz_title' => $quizTitle,
+                'sender_name' => $senderName,
             ],
         ]);
     }

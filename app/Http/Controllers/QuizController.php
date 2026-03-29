@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Models\ClassModel;
 use App\Models\Question;
 use App\Models\Quiz;
+use App\Models\User;
 use App\Services\FileTextExtractor;
 use App\Services\QuizCloningService;
 use App\Services\QuizGeneratorService;
@@ -141,9 +142,15 @@ class QuizController extends Controller
 
         $quiz->load(['questions', 'classModel']);
 
+        $teachers = User::where('role', 'teacher')
+            ->where('id', '!=', $request->user()->id)
+            ->orderBy('first_name')
+            ->get(['id', 'first_name', 'last_name', 'email']);
+
         return Inertia::render('Quizzes/Edit', [
             'quiz' => $quiz,
             'classData' => $quiz->classModel,
+            'teachers' => $teachers,
         ]);
     }
 
@@ -284,9 +291,19 @@ class QuizController extends Controller
             abort(403);
         }
 
+        $teachers = [];
+        if ($user->isTeacher()) {
+            $teachers = User::where('role', 'teacher')
+                ->where('id', '!=', $user->id)
+                ->orderBy('first_name')
+                ->get(['id', 'first_name', 'last_name', 'email'])
+                ->toArray();
+        }
+
         return Inertia::render('Quizzes/Show', [
             'quiz' => $quiz,
             'isTeacher' => $user->isTeacher(),
+            'teachers' => $teachers,
         ]);
     }
 

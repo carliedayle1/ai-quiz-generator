@@ -1,4 +1,4 @@
-import { Bell, BookOpen, BellOff, CheckCheck } from 'lucide-react';
+import { Bell, BookOpen, BellOff, CheckCheck, Share2 } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { usePage, router } from '@inertiajs/react';
@@ -70,10 +70,21 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
         router.reload({ only: ['unread_notifications'] });
     };
 
+    const handleShareAction = async (notification: AppNotification, action: 'accept' | 'decline') => {
+        const shareId = notification.data?.share_id;
+        if (!shareId) return;
+        const routeName = action === 'accept' ? 'shares.accept' : 'shares.decline';
+        await axios.post(route(routeName, shareId));
+        // Re-fetch to reflect updated state
+        fetchNotifications();
+        router.reload({ only: ['unread_notifications'] });
+    };
+
     const ICONS: Record<string, React.ReactNode> = {
         quiz_opened: <BookOpen className="h-4 w-4 text-primary" />,
         quiz_missed: <BellOff className="h-4 w-4 text-destructive" />,
         study_tip: <BookOpen className="h-4 w-4 text-blue-500" />,
+        quiz_shared: <Share2 className="h-4 w-4 text-orange-500" />,
     };
 
     return (
@@ -148,20 +159,21 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
                             <p className="text-center text-sm text-muted-foreground py-6">No notifications yet.</p>
                         ) : (
                             notifications.map((n) => (
-                                <button
+                                <div
                                     key={n.id}
-                                    type="button"
+                                    className={cn(
+                                        'px-3 py-3 flex items-start gap-3',
+                                        !n.read_at && 'bg-primary/5',
+                                        n.type !== 'quiz_shared' && 'cursor-pointer hover:bg-accent transition-colors'
+                                    )}
                                     onClick={() => {
+                                        if (n.type === 'quiz_shared') return;
                                         if (!n.read_at) markRead(n.id);
                                         if (n.data?.route) {
                                             router.visit(n.data.route);
                                             setOpen(false);
                                         }
                                     }}
-                                    className={cn(
-                                        'w-full text-left px-3 py-3 flex items-start gap-3 transition-colors hover:bg-accent',
-                                        !n.read_at && 'bg-primary/5'
-                                    )}
                                 >
                                     <span className="mt-0.5 shrink-0">{ICONS[n.type] ?? <Bell className="h-4 w-4 text-muted-foreground" />}</span>
                                     <div className="flex-1 min-w-0">
@@ -172,11 +184,32 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
                                         <p className="text-xs text-muted-foreground mt-1">
                                             {new Date(n.created_at).toLocaleString()}
                                         </p>
+                                        {n.type === 'quiz_shared' && !n.read_at && (
+                                            <div className="flex gap-2 mt-2">
+                                                <button
+                                                    type="button"
+                                                    onClick={e => { e.stopPropagation(); handleShareAction(n, 'accept'); }}
+                                                    className="px-2 py-0.5 text-xs bg-primary text-primary-foreground font-medium hover:bg-primary/90"
+                                                >
+                                                    Accept
+                                                </button>
+                                                <button
+                                                    type="button"
+                                                    onClick={e => { e.stopPropagation(); handleShareAction(n, 'decline'); }}
+                                                    className="px-2 py-0.5 text-xs border border-border text-muted-foreground hover:text-foreground"
+                                                >
+                                                    Decline
+                                                </button>
+                                            </div>
+                                        )}
+                                        {n.type === 'quiz_shared' && n.read_at && (
+                                            <p className="text-xs text-muted-foreground mt-1 italic">Responded</p>
+                                        )}
                                     </div>
-                                    {!n.read_at && (
+                                    {!n.read_at && n.type !== 'quiz_shared' && (
                                         <span className="mt-1.5 h-2 w-2 rounded-full bg-primary shrink-0" />
                                     )}
-                                </button>
+                                </div>
                             ))
                         )}
                     </div>

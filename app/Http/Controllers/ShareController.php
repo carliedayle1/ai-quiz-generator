@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppNotification;
+use App\Models\Quiz;
 use App\Models\QuizShare;
 use App\Models\User;
 use App\Services\NotificationService;
@@ -11,9 +12,48 @@ use Illuminate\Http\Request;
 
 class ShareController extends Controller
 {
-    public function create(Request $request, QuizShare $share = null)
+    public function shareQuiz(Quiz $quiz, Request $request, NotificationService $notificationService)
     {
-        // This method is unused — share creation is via QuizController::share()
+        if ($quiz->classModel->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $validated = $request->validate([
+            'recipient_id' => 'required|integer|exists:users,id',
+        ]);
+
+        $recipient = User::findOrFail($validated['recipient_id']);
+
+        if (!$recipient->isTeacher()) {
+            return back()->withErrors(['recipient_id' => 'You can only share with other teachers.']);
+        }
+
+        if ($recipient->id === $request->user()->id) {
+            return back()->withErrors(['recipient_id' => 'You cannot share a quiz with yourself.']);
+        }
+
+        // Prevent duplicate pending shares
+        $existing = QuizShare::where('quiz_id', $quiz->id)
+            ->where('sender_id', $request->user()->id)
+            ->where('recipient_id', $recipient->id)
+            ->where('status', 'pending')
+            ->first();
+
+        if ($existing) {
+            return back()->with('flash', ['info' => 'You already have a pending share with this teacher.']);
+        }
+
+        $share = QuizShare::create([
+            'quiz_id' => $quiz->id,
+            'sender_id' => $request->user()->id,
+            'recipient_id' => $recipient->id,
+            'status' => 'pending',
+        ]);
+
+        $share->load(['quiz', 'sender']);
+        $notificationService->notifyQuizShared($share);
+
+        return back()->with('flash', ['success' => 'Quiz shared successfully!']);
     }
 
     public function accept(QuizShare $share, Request $request, QuizCloningService $cloningService)

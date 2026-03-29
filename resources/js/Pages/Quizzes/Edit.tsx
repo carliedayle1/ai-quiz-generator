@@ -9,12 +9,14 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Card, CardContent } from '@/Components/ui/card';
 import QuizPreviewDialog from '@/Components/QuizPreviewDialog';
 import QuizSchedulePanel from '@/Components/QuizSchedulePanel';
+import ShareQuizDialog from '@/Components/ShareQuizDialog';
 import {
     ArrowLeft,
     GripVertical,
     Loader2,
     Plus,
     Printer,
+    Share2,
     Sparkles,
     Trash2,
     CheckSquare,
@@ -59,7 +61,9 @@ const DEFAULT_CONTENT: Record<string, object> = {
     section_header: { title: '', description: '' },
 };
 
-export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz: Quiz; classData: ClassModel }>) {
+interface Teacher { id: number; first_name: string; last_name: string; email: string; }
+
+export default function Edit({ quiz: initialQuiz, classData, teachers = [] }: PageProps<{ quiz: Quiz; classData: ClassModel; teachers: Teacher[] }>) {
     const [questions, setQuestions] = useState<Question[]>(initialQuiz.questions ?? []);
     const [selectedIndex, setSelectedIndex] = useState<number | null>(null);
     const [title, setTitle] = useState(initialQuiz.title);
@@ -70,6 +74,7 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
     const [scheduleOpen, setScheduleOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiTypePickerOpen, setAiTypePickerOpen] = useState(false);
+    const [shareOpen, setShareOpen] = useState(false);
     const [dragIndex, setDragIndex] = useState<number | null>(null);
     const [dragOverIndex, setDragOverIndex] = useState<number | null>(null);
     const saveTimer = useRef<ReturnType<typeof setTimeout>>();
@@ -263,6 +268,11 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                                 <Printer className="mr-2 h-4 w-4" /> Print
                             </Button>
                         </Link>
+                        {teachers.length > 0 && (
+                            <Button variant="outline" onClick={() => setShareOpen(true)}>
+                                <Share2 className="mr-2 h-4 w-4" /> Share
+                            </Button>
+                        )}
                         <Button onClick={() => router.post(
                             initialQuiz.status === 'published'
                                 ? route('quizzes.unpublish', initialQuiz.id)
@@ -419,6 +429,12 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                 quiz={initialQuiz}
                 open={scheduleOpen}
                 onClose={() => setScheduleOpen(false)}
+            />
+            <ShareQuizDialog
+                quizId={initialQuiz.id}
+                teachers={teachers}
+                open={shareOpen}
+                onClose={() => setShareOpen(false)}
             />
         </AuthenticatedLayout>
     );
