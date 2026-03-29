@@ -14,7 +14,7 @@ class NotificationService
             'user_id' => $student->id,
             'type' => 'quiz_opened',
             'title' => 'New Quiz Available',
-            'body' => ""{$quiz->title}" is now open for submission.",
+            'body' => "\"{$quiz->title}\" is now open for submission.",
             'data' => [
                 'quiz_id' => $quiz->id,
                 'quiz_title' => $quiz->title,
@@ -29,7 +29,7 @@ class NotificationService
             'user_id' => $student->id,
             'type' => 'quiz_missed',
             'title' => 'Quiz Deadline Passed',
-            'body' => "You missed "{$quiz->title}". The submission window has closed.",
+            'body' => "You missed \"{$quiz->title}\". The submission window has closed.",
             'data' => [
                 'quiz_id' => $quiz->id,
                 'quiz_title' => $quiz->title,
@@ -46,7 +46,7 @@ class NotificationService
             'user_id' => $share->recipient_id,
             'type' => 'quiz_shared',
             'title' => 'Quiz Shared With You',
-            'body' => "Teacher {$senderName} shared "{$quizTitle}" with you.",
+            'body' => "Teacher {$senderName} shared \"{$quizTitle}\" with you.",
             'data' => [
                 'share_id' => $share->id,
                 'quiz_title' => $quizTitle,
