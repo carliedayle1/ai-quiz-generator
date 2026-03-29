@@ -108,4 +108,5 @@ export type PageProps<
         success?: string;
         bulk_results?: BulkInviteResults;
     };
+    unread_notifications: number;
 };

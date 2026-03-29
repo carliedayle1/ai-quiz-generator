@@ -1,4 +1,5 @@
 import ApplicationLogo from '@/Components/ApplicationLogo';
+import NotificationBell from '@/Components/NotificationBell';
 import SidebarNavLink from '@/Components/SidebarNavLink';
 import ThemeToggle from '@/Components/ThemeToggle';
 import { Link, usePage } from '@inertiajs/react';
@@ -196,7 +197,10 @@ export default function Authenticated({
             {/* Bottom section */}
             <div className="border-t-3 border-foreground p-2 space-y-1">
                 <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-1')}>
-                    <ThemeToggle />
+                    <div className="flex items-center gap-1">
+                        <ThemeToggle />
+                        {!collapsed && user.role !== 'admin' && <NotificationBell />}
+                    </div>
                     {!collapsed && (
                         <Button
                             variant="ghost"
@@ -268,7 +272,8 @@ export default function Authenticated({
                     <ApplicationLogo className="h-8 w-8" />
                     <span className="font-extrabold text-lg">QuizAI</span>
                 </Link>
-                <div className="ml-auto">
+                <div className="ml-auto flex items-center gap-1">
+                    {user.role !== 'admin' && <NotificationBell />}
                     <ThemeToggle />
                 </div>
             </div>

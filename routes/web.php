@@ -3,6 +3,7 @@
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ExamLogController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuizController;
@@ -28,7 +29,32 @@ Route::get('/dashboard', function () {
     if ($user->isTeacher()) {
         return redirect()->route('classes.index');
     }
-    return Inertia::render('Dashboard');
+
+    // Student dashboard data
+    $enrolledClassIds = $user->enrolledClasses()->pluck('classes.id');
+
+    $upcomingQuizzes = \App\Models\Quiz::whereIn('class_id', $enrolledClassIds)
+        ->where('status', 'published')
+        ->where(function ($q) {
+            $q->whereNull('available_until')->orWhere('available_until', '>=', now());
+        })
+        ->whereDoesntHave('submissions', function ($q) use ($user) {
+            $q->where('user_id', $user->id)->whereNotNull('submitted_at');
+        })
+        ->with('classModel:id,name')
+        ->orderBy('due_date')
+        ->limit(10)
+        ->get();
+
+    $recentNotifications = \App\Models\AppNotification::where('user_id', $user->id)
+        ->orderByDesc('created_at')
+        ->limit(5)
+        ->get();
+
+    return Inertia::render('Dashboard', [
+        'upcomingQuizzes' => $upcomingQuizzes,
+        'recentNotifications' => $recentNotifications,
+    ]);
 })->middleware(['auth', 'verified'])->name('dashboard');
 
 Route::middleware('auth')->group(function () {
@@ -36,6 +62,11 @@ Route::middleware('auth')->group(function () {
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('/profile', [ProfileController::class, 'update'])->name('profile.update');
     Route::delete('/profile', [ProfileController::class, 'destroy'])->name('profile.destroy');
+
+    // Notifications
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::post('/notifications/{notification}/read', [NotificationController::class, 'markRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllRead'])->name('notifications.read-all');
 
     // Classes, Quizzes, Exams — not accessible to admins
     Route::middleware('not_admin')->group(function () {
