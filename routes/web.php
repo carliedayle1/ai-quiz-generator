@@ -6,7 +6,6 @@ use App\Http\Controllers\ClassController;
 use App\Http\Controllers\ExamLogController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\ProfileController;
-use App\Http\Controllers\QuestionBankController;
 use App\Http\Controllers\QuizController;
 use App\Http\Controllers\SubmissionController;
 use Illuminate\Foundation\Application;
@@ -114,13 +113,6 @@ Route::middleware('auth')->group(function () {
         // PDF print (submit existing result)
         Route::get('/submissions/{submission}/print', [SubmissionController::class, 'printResult'])->name('submissions.print');
 
-        // Question Bank (teachers only, but middleware handles that via role check in controller)
-        Route::get('/question-bank', [QuestionBankController::class, 'index'])->name('question-bank.index');
-        Route::post('/question-bank', [QuestionBankController::class, 'store'])->name('question-bank.store');
-        Route::post('/question-bank/bulk', [QuestionBankController::class, 'bulkStore'])->name('question-bank.bulk-store');
-        Route::get('/question-bank/search', [QuestionBankController::class, 'search'])->name('question-bank.search');
-        Route::put('/question-bank/{questionBankItem}', [QuestionBankController::class, 'update'])->name('question-bank.update');
-        Route::delete('/question-bank/{questionBankItem}', [QuestionBankController::class, 'destroy'])->name('question-bank.destroy');
     });
 
     // Admin routes

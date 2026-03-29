@@ -14,6 +14,7 @@ class Quiz extends Model
     protected $fillable = [
         'class_id', 'title', 'description', 'time_limit', 'is_published',
         'available_from', 'available_until', 'due_date', 'status', 'allow_partial_credit',
+        'is_public',
     ];
 
     protected function casts(): array
@@ -21,6 +22,7 @@ class Quiz extends Model
         return [
             'is_published' => 'boolean',
             'allow_partial_credit' => 'boolean',
+            'is_public' => 'boolean',
             'time_limit' => 'integer',
             'available_from' => 'datetime',
             'available_until' => 'datetime',
@@ -52,6 +54,11 @@ class Quiz extends Model
     public function scopePublished($query)
     {
         return $query->where('status', 'published');
+    }
+
+    public function scopePublic($query)
+    {
+        return $query->where('is_public', true);
     }
 
     public function classModel(): BelongsTo

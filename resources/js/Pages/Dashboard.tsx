@@ -81,11 +81,17 @@ export default function Dashboard({
                                                     )}
                                                 </div>
                                             </div>
-                                            <Link href={route('quizzes.take', quiz.id)}>
-                                                <Button size="sm" variant="outline">
-                                                    Start
-                                                </Button>
-                                            </Link>
+                                            {quiz.available_from && new Date(quiz.available_from) > new Date() ? (
+                                                <Badge variant="secondary" className="text-xs shrink-0">
+                                                    Opens {new Date(quiz.available_from).toLocaleDateString()}
+                                                </Badge>
+                                            ) : (
+                                                <Link href={route('quizzes.take', quiz.id)}>
+                                                    <Button size="sm" variant="outline">
+                                                        Start
+                                                    </Button>
+                                                </Link>
+                                            )}
                                         </div>
                                     ))}
                                 </div>

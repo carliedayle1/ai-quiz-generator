@@ -5,6 +5,7 @@ import { usePage, router } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { useEffect, useRef, useState } from 'react';
 import axios from 'axios';
+import { cn } from '@/lib/utils';
 
 interface AppNotification {
     id: number;
@@ -16,7 +17,13 @@ interface AppNotification {
     created_at: string;
 }
 
-export default function NotificationBell() {
+interface Props {
+    collapsed?: boolean;
+    /** 'sidebar' opens the panel to the right of the sidebar; 'topbar' opens it below */
+    variant?: 'sidebar' | 'topbar';
+}
+
+export default function NotificationBell({ collapsed = false, variant = 'sidebar' }: Props) {
     const { unread_notifications } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
@@ -39,7 +46,6 @@ export default function NotificationBell() {
         if (open) fetchNotifications();
     }, [open]);
 
-    // Close on outside click
     useEffect(() => {
         const handler = (e: MouseEvent) => {
             if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
@@ -72,26 +78,60 @@ export default function NotificationBell() {
 
     return (
         <div className="relative" ref={panelRef}>
-            <Button
-                variant="ghost"
-                size="icon"
-                className="relative"
-                onClick={() => setOpen((prev) => !prev)}
-                aria-label="Notifications"
-            >
-                <Bell className="h-5 w-5" />
-                {unread_notifications > 0 && (
-                    <Badge
-                        variant="destructive"
-                        className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-xs flex items-center justify-center"
-                    >
-                        {unread_notifications > 9 ? '9+' : unread_notifications}
-                    </Badge>
-                )}
-            </Button>
+            {variant === 'topbar' ? (
+                /* Icon-only button for mobile top bar */
+                <Button
+                    variant="ghost"
+                    size="icon"
+                    className="relative"
+                    onClick={() => setOpen((prev) => !prev)}
+                    aria-label="Notifications"
+                >
+                    <Bell className="h-5 w-5" />
+                    {unread_notifications > 0 && (
+                        <Badge
+                            variant="destructive"
+                            className="absolute -top-1 -right-1 h-4 min-w-4 px-1 text-xs flex items-center justify-center"
+                        >
+                            {unread_notifications > 9 ? '9+' : unread_notifications}
+                        </Badge>
+                    )}
+                </Button>
+            ) : (
+                /* Sidebar nav-style button */
+                <button
+                    type="button"
+                    onClick={() => setOpen((prev) => !prev)}
+                    aria-label="Notifications"
+                    className={cn(
+                        'flex w-full items-center rounded-md transition-colors hover:bg-accent text-foreground',
+                        collapsed ? 'justify-center p-2' : 'gap-3 px-3 py-2',
+                        open && 'bg-accent'
+                    )}
+                >
+                    <span className="relative shrink-0">
+                        <Bell className="h-5 w-5" />
+                        {unread_notifications > 0 && (
+                            <span className="absolute -top-1.5 -right-1.5 flex h-4 min-w-4 items-center justify-center rounded-full bg-destructive px-1 text-[10px] font-bold text-destructive-foreground">
+                                {unread_notifications > 9 ? '9+' : unread_notifications}
+                            </span>
+                        )}
+                    </span>
+                    {!collapsed && (
+                        <span className="flex-1 text-sm font-medium text-left">Notifications</span>
+                    )}
+                </button>
+            )}
 
+            {/* Dropdown */}
             {open && (
-                <div className="absolute right-0 top-full mt-1 w-80 z-50 border-3 border-foreground bg-background shadow-brutal-lg">
+                <div
+                    className="z-50 w-80 border-3 border-foreground bg-background shadow-brutal-lg"
+                    style={variant === 'sidebar'
+                        ? { position: 'fixed', left: 'var(--sidebar-width, 256px)', bottom: '48px' }
+                        : { position: 'absolute', right: 0, top: '100%', marginTop: '4px' }
+                    }
+                >
                     <div className="flex items-center justify-between border-b-2 border-border px-3 py-2">
                         <span className="text-sm font-bold">Notifications</span>
                         {notifications.some((n) => !n.read_at) && (
@@ -118,9 +158,10 @@ export default function NotificationBell() {
                                             setOpen(false);
                                         }
                                     }}
-                                    className={`w-full text-left px-3 py-3 flex items-start gap-3 transition-colors hover:bg-accent ${
-                                        !n.read_at ? 'bg-primary/5' : ''
-                                    }`}
+                                    className={cn(
+                                        'w-full text-left px-3 py-3 flex items-start gap-3 transition-colors hover:bg-accent',
+                                        !n.read_at && 'bg-primary/5'
+                                    )}
                                 >
                                     <span className="mt-0.5 shrink-0">{ICONS[n.type] ?? <Bell className="h-4 w-4 text-muted-foreground" />}</span>
                                     <div className="flex-1 min-w-0">

@@ -9,10 +9,8 @@ import { Textarea } from '@/Components/ui/textarea';
 import { Card, CardContent } from '@/Components/ui/card';
 import QuizPreviewDialog from '@/Components/QuizPreviewDialog';
 import QuizSchedulePanel from '@/Components/QuizSchedulePanel';
-import QuestionBankPicker from '@/Components/QuestionBankPicker';
 import {
     ArrowLeft,
-    Database,
     GripVertical,
     Loader2,
     Plus,
@@ -70,7 +68,6 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
     const [saveState, setSaveState] = useState<'saved' | 'saving' | 'unsaved'>('saved');
     const [previewOpen, setPreviewOpen] = useState(false);
     const [scheduleOpen, setScheduleOpen] = useState(false);
-    const [bankPickerOpen, setBankPickerOpen] = useState(false);
     const [aiGenerating, setAiGenerating] = useState(false);
     const [aiTypePickerOpen, setAiTypePickerOpen] = useState(false);
     const [dragIndex, setDragIndex] = useState<number | null>(null);
@@ -115,22 +112,6 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
             setSelectedIndex(questions.length);
         } catch (e) {
             console.error('Failed to add question', e);
-        }
-    };
-
-    // Import questions from question bank
-    const importFromBank = async (items: { type: string; content: Record<string, any>; points: number }[]) => {
-        for (const item of items) {
-            try {
-                const resp = await axios.post(route('questions.store', initialQuiz.id), {
-                    type: item.type,
-                    content: item.content,
-                    points: item.points,
-                });
-                setQuestions(prev => [...prev, resp.data.question]);
-            } catch (e) {
-                console.error('Failed to import question', e);
-            }
         }
     };
 
@@ -422,11 +403,6 @@ export default function Edit({ quiz: initialQuiz, classData }: PageProps<{ quiz:
                 quiz={initialQuiz}
                 open={scheduleOpen}
                 onClose={() => setScheduleOpen(false)}
-            />
-            <QuestionBankPicker
-                open={bankPickerOpen}
-                onClose={() => setBankPickerOpen(false)}
-                onImport={importFromBank}
             />
         </AuthenticatedLayout>
     );

@@ -67,15 +67,27 @@ export default function Show({ classData }: PageProps<{ classData: ClassModel }>
                                 {classData.quizzes.map((quiz) => (
                                     <Link
                                         key={quiz.id}
-                                        href={isTeacher ? route('quizzes.show', quiz.id) : (quiz.is_published ? route('quizzes.take', quiz.id) : '#')}
+                                        href={isTeacher ? route('quizzes.show', quiz.id) : (quiz.is_published && (!quiz.available_from || new Date(quiz.available_from) <= new Date()) ? route('quizzes.take', quiz.id) : '#')}
                                     >
                                         <Card className="hover:shadow-brutal transition-shadow cursor-pointer">
                                             <CardHeader>
                                                 <div className="flex items-center justify-between">
                                                     <CardTitle className="text-lg">{quiz.title}</CardTitle>
-                                                    <Badge variant={quiz.is_published ? 'default' : 'secondary'}>
-                                                        {quiz.is_published ? 'Published' : 'Draft'}
-                                                    </Badge>
+                                                    {isTeacher ? (
+                                                        <Badge variant={quiz.is_published ? 'default' : 'secondary'}>
+                                                            {quiz.is_published ? 'Published' : 'Draft'}
+                                                        </Badge>
+                                                    ) : (
+                                                        quiz.available_from && new Date(quiz.available_from) > new Date() ? (
+                                                            <Badge variant="secondary">
+                                                                Opens {new Date(quiz.available_from).toLocaleDateString()}
+                                                            </Badge>
+                                                        ) : (
+                                                            <Badge variant={quiz.is_published ? 'default' : 'secondary'}>
+                                                                {quiz.is_published ? 'Available' : 'Not yet open'}
+                                                            </Badge>
+                                                        )
+                                                    )}
                                                 </div>
                                                 {quiz.description && (
                                                     <CardDescription>{quiz.description}</CardDescription>

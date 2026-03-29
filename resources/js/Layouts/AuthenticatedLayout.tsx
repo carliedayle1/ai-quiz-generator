@@ -56,14 +56,16 @@ export default function Authenticated({
         <>
             {user.role !== 'admin' && (
                 <>
-                    <SidebarNavLink
-                        href={route('dashboard')}
-                        active={route().current('dashboard')}
-                        icon={LayoutDashboard}
-                        collapsed={collapsed}
-                    >
-                        Dashboard
-                    </SidebarNavLink>
+                    {user.role === 'student' && (
+                        <SidebarNavLink
+                            href={route('dashboard')}
+                            active={route().current('dashboard')}
+                            icon={LayoutDashboard}
+                            collapsed={collapsed}
+                        >
+                            Dashboard
+                        </SidebarNavLink>
+                    )}
                     <SidebarNavLink
                         href={route('classes.index')}
                         active={route().current('classes.*') || route().current('quizzes.*')}
@@ -75,12 +77,12 @@ export default function Authenticated({
                     {user.role === 'teacher' && (
                         <>
                             <SidebarNavLink
-                                href={route('question-bank.index')}
-                                active={route().current('question-bank.*')}
+                                href={route('quiz-bank.index')}
+                                active={route().current('quiz-bank.*')}
                                 icon={Database}
                                 collapsed={collapsed}
                             >
-                                Question Bank
+                                Quiz Bank
                             </SidebarNavLink>
                             <SidebarNavLink
                                 href={route('analytics.index')}
@@ -129,14 +131,16 @@ export default function Authenticated({
         <>
             {user.role !== 'admin' && (
                 <>
-                    <SidebarNavLink
-                        href={route('dashboard')}
-                        active={route().current('dashboard')}
-                        icon={LayoutDashboard}
-                        collapsed={false}
-                    >
-                        Dashboard
-                    </SidebarNavLink>
+                    {user.role === 'student' && (
+                        <SidebarNavLink
+                            href={route('dashboard')}
+                            active={route().current('dashboard')}
+                            icon={LayoutDashboard}
+                            collapsed={false}
+                        >
+                            Dashboard
+                        </SidebarNavLink>
+                    )}
                     <SidebarNavLink
                         href={route('classes.index')}
                         active={route().current('classes.*') || route().current('quizzes.*')}
@@ -184,6 +188,7 @@ export default function Authenticated({
                 'fixed inset-y-0 left-0 z-30 hidden md:flex flex-col border-r-3 border-foreground bg-card transition-all duration-200',
                 collapsed ? 'w-16' : 'w-64'
             )}
+            style={{ '--sidebar-width': collapsed ? '64px' : '256px' } as React.CSSProperties}
         >
             {/* Logo */}
             <div className={cn(
@@ -207,11 +212,9 @@ export default function Authenticated({
 
             {/* Bottom section */}
             <div className="border-t-3 border-foreground p-2 space-y-1">
+                {/* Theme toggle + collapse button row */}
                 <div className={cn('flex items-center', collapsed ? 'justify-center' : 'justify-between px-1')}>
-                    <div className="flex items-center gap-1">
-                        <ThemeToggle />
-                        {!collapsed && user.role !== 'admin' && <NotificationBell />}
-                    </div>
+                    <ThemeToggle />
                     {!collapsed && (
                         <Button
                             variant="ghost"
@@ -221,17 +224,12 @@ export default function Authenticated({
                             <PanelLeftClose className="h-5 w-5" />
                         </Button>
                     )}
-                    {collapsed && (
-                        <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => setCollapsed(false)}
-                            className="hidden"
-                        >
-                            <PanelLeftOpen className="h-5 w-5" />
-                        </Button>
-                    )}
                 </div>
+
+                {/* Notifications bell as nav item */}
+                {user.role !== 'admin' && (
+                    <NotificationBell collapsed={collapsed} />
+                )}
 
                 <SidebarNavLink
                     href={route('profile.edit')}
@@ -284,7 +282,7 @@ export default function Authenticated({
                     <span className="font-extrabold text-lg">QuizAI</span>
                 </Link>
                 <div className="ml-auto flex items-center gap-1">
-                    {user.role !== 'admin' && <NotificationBell />}
+                    {user.role !== 'admin' && <NotificationBell variant="topbar" />}
                     <ThemeToggle />
                 </div>
             </div>
