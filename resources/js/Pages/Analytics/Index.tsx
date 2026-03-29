@@ -1,5 +1,5 @@
 import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout';
-import { Head } from '@inertiajs/react';
+import { Head, Link } from '@inertiajs/react';
 import { PageProps } from '@/types';
 import { Card, CardContent, CardHeader, CardTitle } from '@/Components/ui/card';
 import { Badge } from '@/Components/ui/badge';
@@ -103,7 +103,9 @@ export default function Index({
                                             {quizStats.map((qs) => (
                                                 <tr key={qs.id}>
                                                     <td className="py-2 pr-4">
-                                                        <span className="font-medium">{qs.title}</span>
+                                                        <Link href={route('quizzes.show', qs.id)} className="font-medium hover:underline">
+                                                            {qs.title}
+                                                        </Link>
                                                         {' '}
                                                         <Badge variant={qs.status === 'published' ? 'default' : 'secondary'} className="text-xs ml-1">
                                                             {qs.status}

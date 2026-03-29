@@ -5,7 +5,7 @@ import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { Card, CardContent } from '@/Components/ui/card';
 import { Input } from '@/Components/ui/input';
-import { BookOpen, Copy, Loader2, Search } from 'lucide-react';
+import { BookOpen, Copy, Loader2, Search, X } from 'lucide-react';
 import { useState } from 'react';
 
 interface BankQuiz {
@@ -35,21 +35,37 @@ interface PaginatedQuizzes {
     links: { url: string | null; label: string; active: boolean }[];
 }
 
+interface ClassOption {
+    id: number;
+    name: string;
+}
+
 export default function QuizBankIndex({
     quizzes,
     search: initialSearch,
-}: PageProps<{ quizzes: PaginatedQuizzes; search: string }>) {
+    classes,
+}: PageProps<{ quizzes: PaginatedQuizzes; search: string; classes: ClassOption[] }>) {
     const [search, setSearch] = useState(initialSearch);
     const [cloningId, setCloningId] = useState<number | null>(null);
+    const [copyTarget, setCopyTarget] = useState<BankQuiz | null>(null);
+    const [selectedClassId, setSelectedClassId] = useState<string>('');
 
     const handleSearch = (e: React.FormEvent) => {
         e.preventDefault();
         router.get(route('quiz-bank.index'), { search }, { preserveState: true });
     };
 
-    const handleCopy = (quizId: number) => {
+    const handleCopyClick = (quiz: BankQuiz) => {
+        setCopyTarget(quiz);
+        setSelectedClassId(classes.length === 1 ? String(classes[0].id) : '');
+    };
+
+    const handleConfirmCopy = () => {
+        if (!copyTarget || !selectedClassId) return;
+        const quizId = copyTarget.id;
         setCloningId(quizId);
-        router.post(route('quizzes.clone', quizId), {}, {
+        setCopyTarget(null);
+        router.post(route('quizzes.clone', quizId), { class_id: selectedClassId }, {
             onFinish: () => setCloningId(null),
         });
     };
@@ -123,7 +139,7 @@ export default function QuizBankIndex({
                                             <Button
                                                 size="sm"
                                                 variant="outline"
-                                                onClick={() => handleCopy(quiz.id)}
+                                                onClick={() => handleCopyClick(quiz)}
                                                 disabled={cloningId !== null}
                                                 className="shrink-0"
                                             >
@@ -157,6 +173,43 @@ export default function QuizBankIndex({
                     )}
                 </div>
             </div>
+
+            {/* Class picker modal */}
+            {copyTarget && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+                    <div className="bg-background border-3 border-foreground shadow-brutal-lg w-full max-w-sm mx-4 p-6">
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="font-bold text-base">Copy to Which Class?</h3>
+                            <button type="button" onClick={() => setCopyTarget(null)} className="text-muted-foreground hover:text-foreground">
+                                <X className="h-4 w-4" />
+                            </button>
+                        </div>
+                        <p className="text-sm text-muted-foreground mb-4">
+                            Select the class where <span className="font-medium text-foreground">"{copyTarget.title}"</span> will be added.
+                        </p>
+                        {classes.length === 0 ? (
+                            <p className="text-sm text-destructive mb-4">You have no classes. Create a class first.</p>
+                        ) : (
+                            <select
+                                className="w-full border-2 border-foreground bg-background px-3 py-2 text-sm mb-4 focus:outline-none"
+                                value={selectedClassId}
+                                onChange={e => setSelectedClassId(e.target.value)}
+                            >
+                                <option value="">— Select a class —</option>
+                                {classes.map(c => (
+                                    <option key={c.id} value={c.id}>{c.name}</option>
+                                ))}
+                            </select>
+                        )}
+                        <div className="flex gap-2 justify-end">
+                            <Button variant="outline" size="sm" onClick={() => setCopyTarget(null)}>Cancel</Button>
+                            <Button size="sm" onClick={handleConfirmCopy} disabled={!selectedClassId}>
+                                <Copy className="mr-1.5 h-3.5 w-3.5" /> Copy Quiz
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </AuthenticatedLayout>
     );
 }

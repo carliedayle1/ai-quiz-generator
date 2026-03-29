@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\AppNotification;
+use App\Models\ClassModel;
 use App\Models\Quiz;
 use App\Models\QuizShare;
 use App\Models\User;
@@ -67,7 +68,16 @@ class ShareController extends Controller
             return redirect()->route('classes.index')->with('flash', ['info' => 'This share has already been responded to.']);
         }
 
-        $newQuiz = $cloningService->clone($share->quiz, $request->user());
+        $validated = $request->validate([
+            'class_id' => 'required|integer|exists:classes,id',
+        ]);
+
+        $class = ClassModel::findOrFail($validated['class_id']);
+        if ($class->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $newQuiz = $cloningService->clone($share->quiz, $request->user(), $validated['class_id']);
 
         $share->update(['status' => 'accepted']);
 

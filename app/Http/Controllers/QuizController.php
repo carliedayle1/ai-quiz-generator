@@ -352,7 +352,16 @@ class QuizController extends Controller
             abort(403);
         }
 
-        $newQuiz = $cloningService->clone($quiz, $request->user());
+        $validated = $request->validate([
+            'class_id' => 'required|integer|exists:classes,id',
+        ]);
+
+        $class = ClassModel::findOrFail($validated['class_id']);
+        if ($class->user_id !== $request->user()->id) {
+            abort(403);
+        }
+
+        $newQuiz = $cloningService->clone($quiz, $request->user(), $validated['class_id']);
 
         return redirect()->route('quizzes.edit', $newQuiz->id);
     }

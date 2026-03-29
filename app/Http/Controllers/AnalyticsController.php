@@ -85,7 +85,8 @@ class AnalyticsController extends Controller
      */
     public function exportGradebook(Quiz $quiz, Request $request)
     {
-        if ($quiz->classModel->user_id !== $request->user()->id) {
+        $ownerId = $quiz->class_id !== null ? $quiz->classModel?->user_id : $quiz->user_id;
+        if ($ownerId !== $request->user()->id) {
             abort(403);
         }
 

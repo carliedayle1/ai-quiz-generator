@@ -65,6 +65,17 @@ class ClassController extends Controller
         return redirect()->route('classes.index');
     }
 
+    public function listJson(Request $request)
+    {
+        if (!$request->user()->isTeacher()) {
+            abort(403);
+        }
+
+        $classes = $request->user()->ownedClasses()->orderBy('name')->get(['id', 'name']);
+
+        return response()->json(['classes' => $classes]);
+    }
+
     public function join(Request $request)
     {
         $validated = $request->validate([

@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\ClassModel;
 use App\Models\Quiz;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
@@ -24,9 +25,14 @@ class QuizBankController extends Controller
 
         $quizzes = $query->latest()->paginate(20)->withQueryString();
 
+        $classes = ClassModel::where('user_id', $request->user()->id)
+            ->orderBy('name')
+            ->get(['id', 'name']);
+
         return Inertia::render('QuizBank/Index', [
             'quizzes' => $quizzes,
             'search' => $search ?? '',
+            'classes' => $classes,
         ]);
     }
 

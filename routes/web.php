@@ -75,6 +75,7 @@ Route::middleware('auth')->group(function () {
         // Classes
         Route::get('/classes', [ClassController::class, 'index'])->name('classes.index');
         Route::post('/classes', [ClassController::class, 'store'])->name('classes.store');
+        Route::get('/classes/list-json', [ClassController::class, 'listJson'])->name('classes.list-json');
         Route::get('/classes/{class}', [ClassController::class, 'show'])->name('classes.show');
         Route::delete('/classes/{class}', [ClassController::class, 'destroy'])->name('classes.destroy');
         Route::post('/classes/join', [ClassController::class, 'join'])->name('classes.join');

@@ -1,4 +1,4 @@
-import { Bell, BookOpen, BellOff, CheckCheck, Share2 } from 'lucide-react';
+import { Bell, BookOpen, BellOff, CheckCheck, Share2, X } from 'lucide-react';
 import { Button } from '@/Components/ui/button';
 import { Badge } from '@/Components/ui/badge';
 import { usePage, router } from '@inertiajs/react';
@@ -17,6 +17,11 @@ interface AppNotification {
     created_at: string;
 }
 
+interface ClassOption {
+    id: number;
+    name: string;
+}
+
 interface Props {
     collapsed?: boolean;
     /** 'sidebar' opens the panel to the right of the sidebar; 'topbar' opens it below */
@@ -27,14 +32,21 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
     const { unread_notifications } = usePage<PageProps>().props;
     const [open, setOpen] = useState(false);
     const [notifications, setNotifications] = useState<AppNotification[]>([]);
+    const [classes, setClasses] = useState<ClassOption[]>([]);
     const [loading, setLoading] = useState(false);
+    const [pendingAccept, setPendingAccept] = useState<AppNotification | null>(null);
+    const [selectedClassId, setSelectedClassId] = useState<string>('');
     const panelRef = useRef<HTMLDivElement>(null);
 
     const fetchNotifications = async () => {
         setLoading(true);
         try {
-            const resp = await axios.get(route('notifications.index'));
-            setNotifications(resp.data.notifications);
+            const [notifResp, classResp] = await Promise.all([
+                axios.get(route('notifications.index')),
+                axios.get(route('classes.list-json')),
+            ]);
+            setNotifications(notifResp.data.notifications);
+            setClasses(classResp.data.classes ?? []);
         } catch {
             // silently ignore
         } finally {
@@ -50,6 +62,7 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
         const handler = (e: MouseEvent) => {
             if (panelRef.current && !panelRef.current.contains(e.target as Node)) {
                 setOpen(false);
+                setPendingAccept(null);
             }
         };
         document.addEventListener('mousedown', handler);
@@ -70,15 +83,32 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
         router.reload({ only: ['unread_notifications'] });
     };
 
-    const handleShareAction = (notification: AppNotification, action: 'accept' | 'decline') => {
-        const shareId = notification.data?.share_id;
+    const handleAcceptClick = (notification: AppNotification) => {
+        setPendingAccept(notification);
+        setSelectedClassId(classes.length === 1 ? String(classes[0].id) : '');
+    };
+
+    const handleConfirmAccept = () => {
+        if (!pendingAccept || !selectedClassId) return;
+        const shareId = pendingAccept.data?.share_id;
         if (!shareId) return;
-        const routeName = action === 'accept' ? 'shares.accept' : 'shares.decline';
+        setPendingAccept(null);
         setOpen(false);
-        router.post(route(routeName, shareId), {}, {
+        router.post(route('shares.accept', shareId), { class_id: selectedClassId }, {
             onError: (errors) => {
                 console.error('Share action failed', errors);
                 alert('Something went wrong. Please try again.');
+            },
+        });
+    };
+
+    const handleDecline = (notification: AppNotification) => {
+        const shareId = notification.data?.share_id;
+        if (!shareId) return;
+        setOpen(false);
+        router.post(route('shares.decline', shareId), {}, {
+            onError: (errors) => {
+                console.error('Decline failed', errors);
             },
         });
     };
@@ -155,6 +185,40 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
                         )}
                     </div>
 
+                    {/* Class picker for accepting a shared quiz */}
+                    {pendingAccept && (
+                        <div className="border-b-2 border-border px-3 py-3 bg-primary/5">
+                            <div className="flex items-center justify-between mb-2">
+                                <p className="text-xs font-semibold">Select class for this quiz</p>
+                                <button type="button" onClick={() => setPendingAccept(null)} className="text-muted-foreground hover:text-foreground">
+                                    <X className="h-3.5 w-3.5" />
+                                </button>
+                            </div>
+                            {classes.length === 0 ? (
+                                <p className="text-xs text-destructive mb-2">No classes found. Create a class first.</p>
+                            ) : (
+                                <select
+                                    className="w-full border-2 border-foreground bg-background px-2 py-1.5 text-xs mb-2 focus:outline-none"
+                                    value={selectedClassId}
+                                    onChange={e => setSelectedClassId(e.target.value)}
+                                >
+                                    <option value="">— Select a class —</option>
+                                    {classes.map(c => (
+                                        <option key={c.id} value={c.id}>{c.name}</option>
+                                    ))}
+                                </select>
+                            )}
+                            <div className="flex gap-2">
+                                <Button size="sm" className="h-6 text-xs flex-1" onClick={handleConfirmAccept} disabled={!selectedClassId}>
+                                    Confirm Accept
+                                </Button>
+                                <Button size="sm" variant="outline" className="h-6 text-xs" onClick={() => setPendingAccept(null)}>
+                                    Cancel
+                                </Button>
+                            </div>
+                        </div>
+                    )}
+
                     <div className="max-h-80 overflow-y-auto divide-y divide-border">
                         {loading ? (
                             <p className="text-center text-sm text-muted-foreground py-6">Loading…</p>
@@ -191,14 +255,14 @@ export default function NotificationBell({ collapsed = false, variant = 'sidebar
                                             <div className="flex gap-2 mt-2">
                                                 <button
                                                     type="button"
-                                                    onClick={e => { e.stopPropagation(); handleShareAction(n, 'accept'); }}
+                                                    onClick={e => { e.stopPropagation(); handleAcceptClick(n); }}
                                                     className="px-2 py-0.5 text-xs bg-primary text-primary-foreground font-medium hover:bg-primary/90"
                                                 >
                                                     Accept
                                                 </button>
                                                 <button
                                                     type="button"
-                                                    onClick={e => { e.stopPropagation(); handleShareAction(n, 'decline'); }}
+                                                    onClick={e => { e.stopPropagation(); handleDecline(n); }}
                                                     className="px-2 py-0.5 text-xs border border-border text-muted-foreground hover:text-foreground"
                                                 >
                                                     Decline
