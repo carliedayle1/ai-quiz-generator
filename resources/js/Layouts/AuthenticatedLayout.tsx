@@ -6,6 +6,7 @@ import { Link, usePage } from '@inertiajs/react';
 import { PropsWithChildren, ReactNode, useEffect, useState } from 'react';
 import {
     BarChart3,
+    Bell,
     Database,
     LayoutDashboard,
     GraduationCap,
@@ -94,6 +95,14 @@ export default function Authenticated({
                             </SidebarNavLink>
                         </>
                     )}
+                    <SidebarNavLink
+                        href={route('notifications.page')}
+                        active={route().current('notifications.*')}
+                        icon={Bell}
+                        collapsed={collapsed}
+                    >
+                        Notifications
+                    </SidebarNavLink>
                 </>
             )}
             {user.role === 'admin' && (
@@ -148,6 +157,14 @@ export default function Authenticated({
                         collapsed={false}
                     >
                         Classes
+                    </SidebarNavLink>
+                    <SidebarNavLink
+                        href={route('notifications.page')}
+                        active={route().current('notifications.*')}
+                        icon={Bell}
+                        collapsed={false}
+                    >
+                        Notifications
                     </SidebarNavLink>
                 </>
             )}

@@ -19,11 +19,13 @@ class AppNotification extends Model
         'body',
         'data',
         'read_at',
+        'seen_at',
     ];
 
     protected $casts = [
         'data' => 'array',
         'read_at' => 'datetime',
+        'seen_at' => 'datetime',
     ];
 
     public function user(): BelongsTo
